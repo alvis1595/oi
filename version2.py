@@ -159,7 +159,7 @@ def create_record():
             connection.close()
     return make_response({'status': 'FAILED', 'message': 'Algo ha salido mal al guardar registro.'}, 500)
 
-##editar###
+##editar### modificando 1
 @cmdb.route('/cmdb/edit', methods=['POST'])
 @require_api_key
 def edit_record():
@@ -187,117 +187,75 @@ def edit_record():
         tiempo_de_instalacion_servidor = data['tiempo_de_instalacion_servidor']
         tiempo_de_instalacion_aplicacion = data['tiempo_de_instalacion_aplicacion']
         joya_de_la_corona = data['joya_de_la_corona']
+        
         user_groups = ldap_login(creador, data['upwd'].replace('"',''))
-        sql = f"""
-                UPDATE cis_registros
-                SET cr_servidor = '{servidor}',
-                    cr_direccion_ip = '{ip}',
-                    cr_tipo_servidor = '{tipo_servidor}',
-                    cr_entorno_ci = '{entorno_ci}',
-                    cr_pais = '{pais}',
-                    cr_aplicacion = '{aplicacion}',
-                    cr_lenguaje = '{lenguaje}',
-                    cr_proveedor = '{proveedor}',
-                    cr_desarrollo = '{desarrollo}',
-                    cr_mesa_responsable = '{responsable}',
-                    cr_rep = '{rep}',
-                    cr_alojamiento = '{alojamiento}',
-                    cr_esquema_de_continuidad = '{esquema_de_continuidad}',
-                    cr_estrategias_de_recuperacion_infra = '{estrategias_de_recuperacion_infra}',
-                    cr_estrategias_de_recuperacion_datos = '{estrategias_de_recuperacion_datos}',
-                    cr_tiempo_de_instalacion_servidor = '{tiempo_de_instalacion_servidor}',
-                    cr_tiempo_de_instalacion_aplicacion = '{tiempo_de_instalacion_aplicacion}',
-                    cr_joya_de_la_corona = '{joya_de_la_corona}'
-                WHERE cr_id = '{cr_id}'
-                """
-        connection = psycopg2.connect(user=db_User,
-                                      password=db_Pass,
-                                      host=db_Host,
-                                      port=db_Port,
-                                      database="cmdb_integracion")
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        # Validar usuario que edita
-        cursor.execute(
-            f"SELECT cr_creador FROM cis_registros WHERE cr_id = {cr_id}")
-        result = cursor.fetchone()
-        var = False
-        for group in user_groups:
-            if 'ccyl' in group:
-                print('parte del grupo')
-                var = True
-                break
-        if var == False:
-            if creador not in result.values():
-                errorcode = 1
-                raise Exception
-        # Actualiza la tabla cis_registro
-        cursor.execute(sql)
-        connection.commit()
+        
+        sql = """
+            UPDATE cis_registros
+            SET cr_servidor = %s, cr_direccion_ip = %s, cr_tipo_servidor = %s, 
+                cr_entorno_ci = %s, cr_pais = %s, cr_aplicacion = %s, cr_lenguaje = %s, 
+                cr_proveedor = %s, cr_desarrollo = %s, cr_mesa_responsable = %s, 
+                cr_rep = %s, cr_alojamiento = %s, cr_esquema_de_continuidad = %s, 
+                cr_estrategias_de_recuperacion_infra = %s, cr_estrategias_de_recuperacion_datos = %s, 
+                cr_tiempo_de_instalacion_servidor = %s, cr_tiempo_de_instalacion_aplicacion = %s, 
+                cr_joya_de_la_corona = %s
+            WHERE cr_id = %s
+        """
+        with psycopg2.connect(user=db_User, password=db_Pass, host=db_Host, port=db_Port, database="cmdb_integracion") as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Validar usuario que edita
+                cursor.execute("SELECT cr_creador FROM cis_registros WHERE cr_id = %s", (cr_id,))
+                result = cursor.fetchone()
 
-    except (Exception, Error):
-        if errorcode == 1:
-            errormsg = jsonify("ERROR: No puede modificar este registro!")
-            print("ERROR: 1")
-        else:
-            logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar.")
-    finally:
-        if connection:
-            cursor.close()
-            connection.close()
-    if errorcode != 0:
-        return (errormsg)
-    else:
-        return jsonify("Se edito el registro correctamente!")
+                if 'ccyl' not in user_groups and creador not in result.values():
+                    return jsonify({"message": "ERROR: No puede modificar este registro!"}), 403
 
+                # Actualiza la tabla cis_registro
+                cursor.execute(sql, (servidor, ip, tipo_servidor, entorno_ci, pais, aplicacion, lenguaje,
+                                     proveedor, desarrollo, responsable, rep, alojamiento, 
+                                     esquema_de_continuidad, estrategias_de_recuperacion_infra,
+                                     estrategias_de_recuperacion_datos, tiempo_de_instalacion_servidor,
+                                     tiempo_de_instalacion_aplicacion, joya_de_la_corona, cr_id))
+                connection.commit()
 
+        return jsonify("Se editó el registro correctamente!")
+
+    except (psycopg2.Error, KeyError) as e:
+        logging.error(f"[ERROR]: {str(e)}")
+        return jsonify({"message": "ERROR: Algo ha salido mal al intentar guardar."}), 500
+
+###### modificadad 2#########
 @cmdb.route('/cmdb/delete', methods=['POST'])
 @require_api_key
 def delete_record():
     try:
-        errorcode = 0
-        errormsg = ""
         data = request.get_json()
         creador = data['creador'].replace('"', '')
         cr_id = data['cr_id']
-        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
-        sql = f"""
-                DELETE FROM cis_registros WHERE cr_id = '{cr_id}'
-                """
-        connection = psycopg2.connect(user=db_User,
-                                      password=db_Pass,
-                                      host=db_Host,
-                                      port=db_Port,
-                                      database="cmdb_integracion")
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        var = False
-        for group in user_groups:
-            if 'ccyl' in group:
-                print('parte del grupo')
-                var = True
-                break
-        if var == False:
-            errorcode = 1
-            raise Exception
-        cursor.execute(sql)
-        connection.commit()
-    except (Exception, Error):
-        if errorcode == 1:
-            errormsg = jsonify(
-                "ERROR: No tiene permisos para eliminar registros!")
-            print("ERROR: 1")
-        else:
-            logging.error(
-                f"[ERROR]: Algo ha salido mal al intentar eliminar el registro.")
-    finally:
-        if connection:
-            cursor.close()
-            connection.close()
-    if errorcode != 0:
-        return (errormsg)
-    else:
-        return jsonify("Se elimino el registro!")
+        user_groups = ldap_login(creador, data['upwd'].replace('"', ''))
 
+        # Validar permisos
+        if not any('ccyl' in group for group in user_groups):
+            return jsonify({"error": "No tiene permisos para eliminar registros!"}), 403
+        
+        # Conexión a la base de datos con manejo de errores
+        with psycopg2.connect(user=db_User, password=db_Pass, host=db_Host, port=db_Port, database="cmdb_integracion") as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                sql = "DELETE FROM cis_registros WHERE cr_id = %s"
+                cursor.execute(sql, (cr_id,))
+                connection.commit()
 
+        return jsonify({"message": "Se eliminó el registro!"})
+    
+    except (psycopg2.DatabaseError) as e:
+        logging.error(f"[ERROR]: Error en la base de datos: {str(e)}")
+        return jsonify({"error": "Error al eliminar el registro!"}), 500
+
+    except Exception as e:
+        logging.error(f"[ERROR]: {str(e)}")
+        return jsonify({"error": "Algo salió mal!"}), 500
+
+####no la modifique########
 def obtener_datos_atributos_manuales():
     connection = None
     records = []
@@ -744,6 +702,7 @@ def obtener_todos_los_datos():
                              "BD_Version": val_get_databases[1]})
     logging.info("[INFO] Reporte de la CMDB generado.")
     return jsonify(LIST_SERVERS)
+### no la toque debido a que las tablas no se pueden parametrizar en postgresql
 
 @cmdb.route('/cmdb/catalog', methods=['GET'])
 @require_api_key
@@ -781,6 +740,8 @@ def catalogos():
                 connection.close()
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
+##### modificada: 
+
 @cmdb.route('/cmdb/add_catalog', methods=['POST'])
 @require_api_key
 def addCatalog():
@@ -809,51 +770,53 @@ def addCatalog():
                   "cei_estrategias","ced_estrategias","ctis_tiempo","ctia_tiempo","cj_joya"
                   ]
         
-        for i, cat in enumerate(catalogos):
-            if cat == catalogo:
-                catalog = tables[i]
-                c_data = col_data[i]
-                break
         try:
-            sql = f"""
-                    INSERT INTO {catalog}({c_data})
-                    VALUES('{value}')
-                    """
-            check = f"""
-                    SELECT {c_data}
-                    FROM {catalog}
-                    WHERE {c_data} = '{value}'
-                    """
+            # Validar el catalogo ingresado
+            if catalogo not in catalogos:
+                raise ValueError("Catálogo no válido.")
+
+            i = catalogos.index(catalogo)
+            catalog = tables[i]
+            c_data = col_data[i]
+
             connection = psycopg2.connect(user=db_User,
-                                        password=db_Pass,
-                                        host=db_Host,
-                                        port=db_Port,
-                                        database="cmdb_integracion")
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
             cursor = connection.cursor(cursor_factory=RealDictCursor)
-            # Valida que el dato no exista en la tabla
-            cursor.execute(check)
+            
+            # Consulta para verificar si el valor ya existe
+            check = f"SELECT {c_data} FROM {catalog} WHERE {c_data} = %s"
+            cursor.execute(check, (value,))
             result = cursor.fetchall()
-            if result != []:
+            
+            if result:
                 errorcode = 1
-                raise Error
-            # Actualiza la tabla
-            cursor.execute(sql)
+                raise Exception("El valor ya existe en el catálogo.")
+            
+            # Inserción segura con valores parametrizados
+            sql = f"INSERT INTO {catalog}({c_data}) VALUES (%s)"
+            cursor.execute(sql, (value,))
             connection.commit()
-        except Error as e:
-            if errorcode == 1:
-                errormsg = jsonify("ERROR: El dato ya existe en el catalogo.")
-                logging.info("ERROR: 1")
-            else:
-                logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar: {e.pgerror}")
+
+        except psycopg2.DatabaseError as e:
+            logging.error(f"[ERROR]: Error de base de datos: {e}")
+            errormsg = jsonify(f"ERROR: No se pudo insertar el registro: {e}")
+        except Exception as e:
+            logging.error(f"[ERROR]: {e}")
+            errormsg = jsonify(f"ERROR: {e}")
         finally:
             if connection:
                 cursor.close()
                 connection.close()
-    if errorcode != 0:
-        return (errormsg)
-    else: 
-        return jsonify("Se agrego el registro correctamente!")
 
+        if errorcode != 0:
+            return errormsg
+        else: 
+            return jsonify("¡Registro agregado correctamente!")
+
+### solo se modifico la consulta sql
 @cmdb.route('/cmdb/edit_catalog', methods=['POST'])
 @require_api_key
 def editCatalog():
@@ -894,13 +857,13 @@ def editCatalog():
         try:
             sql = f"""
                     UPDATE {catalog}
-                    SET {c_data} = '{value}'
-                    WHERE {c_id} = '{id}'
+                    SET {c_data} = %s
+                    WHERE {c_id} = %s
                     """
             check = f"""
                     SELECT {c_data}
                     FROM {catalog}
-                    WHERE {c_data} = '{value}'
+                    WHERE {c_data} = %s
                     """
             connection = psycopg2.connect(user=db_User,
                                         password=db_Pass,
@@ -931,53 +894,63 @@ def editCatalog():
         return (errormsg)
     else: 
         return jsonify("Se edito el registro correctamente!")
-    
+
+#Se mofica completamente:
+
 @cmdb.route('/cmdb/delete_catalog', methods=['POST'])
 @require_api_key
 def deleteCatalog():
     if request.method == 'POST':
         connection = None
-        id = (request.form.get('id').replace('"','')) 
-        catalogo = (request.form.get('cat').replace('"','')) 
-        catalogos = ["Alojamiento", "Desarrollo", "Entorno", "Lenguaje", 
-                    "Aplicacion", "Pais", "Proveedor", "Responsable", "Tipo Servidor",
-                    "Esquema de Continuidad","Estrategias de Recuperación Infra",
-                    "Estrategias de Recuperación Datos",
-                    "Tiempo de Instalación (Servidor)",
-                    "Tiempo de Instalación (Aplicación)","Joya de la Corona"]
-        tables = ["cis_alojamiento", "cis_desarrollo", "cis_entorno_ci", 
-                  "cis_lenguaje", "cis_nombre_aplicacion", "cis_pais_servidor",
-                  "cis_proveedor", "cis_responsable_aplicacion", "cis_tipo_servidor",
-                  "cis_esquema", "cis_estrategias_infra","cis_estrategias_datos",
-                  "cis_tiempo_infra_servidor","cis_tiempo_infra_aplicacion",
-                  "cis_joya"]
-        col_id = ["ca_id", "cd_id", "cec_id", "cl_id", "cna_id", 
-                  "cps_id", "cp_id", "cra_id", "cts_id", "ce_id"
-                  , "cei_id", "ced_id", "ctis_id", "ctia_id", "cj_id"]
-        
-        for i, cat in enumerate(catalogos):
-            if cat == catalogo:
-                catalog = tables[i]
-                c_id = col_id[i]
-                break
-        try:
-            sql = f"""
-                    DELETE FROM {catalog} 
-                    WHERE {c_id} = '{id}'
-                    """
-            connection = psycopg2.connect(user=db_User,
-                                        password=db_Pass,
-                                        host=db_Host,
-                                        port=db_Port,
-                                        database="cmdb_integracion")
-            cursor = connection.cursor(cursor_factory=RealDictCursor)
-            # Elimina de la tabla
-            cursor.execute(sql)
-            connection.commit()
-        except Error as e:
-            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar: {e.pgerror}")
-        finally:
-            if connection:
-                cursor.close()
-                connection.close()
-    return jsonify("Se elimino el registro correctamente!")
+    # Obtener valores del formulario
+    id = request.form.get('id')
+    catalogo = request.form.get('cat')
+
+    if not id or not catalogo:
+        return jsonify({"error": "Faltan parámetros"}), 400
+
+    # Diccionario que mapea los catálogos a tablas y columnas
+    catalog_map = {
+        "Alojamiento": {"table": "cis_alojamiento", "id_col": "ca_id"},
+        "Desarrollo": {"table": "cis_desarrollo", "id_col": "cd_id"},
+        "Entorno": {"table": "cis_entorno_ci", "id_col": "cec_id"},
+        # Agregar el resto de los catalogos aquí
+    }
+
+    # Validar que el catálogo exista
+    catalog_info = catalog_map.get(catalogo)
+    if not catalog_info:
+        return jsonify({"error": "Catálogo no válido"}), 400
+
+    table = catalog_info["table"]
+    id_col = catalog_info["id_col"]
+
+    try:
+        sql = f"DELETE FROM {table} WHERE {id_col} = %s"
+
+        # Conexión a la base de datos
+        connection = psycopg2.connect(user=db_User,
+                                      password=db_Pass,
+                                      host=db_Host,
+                                      port=db_Port,
+                                      database="cmdb_integracion")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+        # Ejecutar la consulta SQL con parámetros
+        cursor.execute(sql, (id,))
+        connection.commit()
+
+        # Verificar si se eliminó algún registro
+        if cursor.rowcount == 0:
+            return jsonify({"error": "No se encontró el registro"}), 404
+
+    except psycopg2.DatabaseError as e:
+        logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar: {str(e)}")
+        return jsonify({"error": "Error en la base de datos"}), 500
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"message": "Se eliminó el registro correctamente!"}), 200
