@@ -148,4 +148,68 @@ probar
   "upwd": "123456"
 }
 
+#########################################################  Segunda api  ##################################################################
+funcion sql:
+CREATE OR REPLACE FUNCTION delete_cis_registro(p_cr_id INT)
+RETURNS VOID AS $$
+BEGIN
+    DELETE FROM cis_registros WHERE cr_id = p_cr_id;
+END;
+$$ LANGUAGE plpgsql;
+
+##################################### API  #####################################################################################################
+@cmdb.route('/cmdb/delete', methods=['POST'])
+@require_api_key
+def delete_record():
+    try:
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')
+        cr_id = data['cr_id']
+        user_groups = ldap_login(creador, data['upwd'].replace('"', ''))
+
+        # Validar permisos
+        if not any('ccyl' in group for group in user_groups):
+            return jsonify({"error": "No tiene permisos para eliminar registros!"}), 403
+        
+        # Conexión a la base de datos con manejo de errores
+        with psycopg2.connect(user=db_User, password=db_Pass, host=db_Host, port=db_Port, database="cmdb_integracion") as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                sql = "DELETE FROM cis_registros WHERE cr_id = %s"
+                cursor.execute(sql, (cr_id,))
+                connection.commit()
+
+        return jsonify({"message": "Se eliminó el registro!"})
+    
+    except (psycopg2.DatabaseError) as e:
+        logging.error(f"[ERROR]: Error en la base de datos: {str(e)}")
+        return jsonify({"error": "Error al eliminar el registro!"}), 500
+
+    except Exception as e:
+        logging.error(f"[ERROR]: {str(e)}")
+        return jsonify({"error": "Algo salió mal!"}), 500
+
+
+Probar:
+
+Usando Postman
+En Postman, puedes seguir estos pasos:
+
+Abre Postman y selecciona POST como el método de la solicitud.
+
+En el campo URL, ingresa http://localhost:5000/cmdb/delete.
+
+En la pestaña Headers, añade lo siguiente:
+
+Key: Content-Type
+Value: application/json
+En la pestaña Body, selecciona la opción raw y luego selecciona JSON (desde el menú desplegable). Ingresa el siguiente contenido en el cuerpo:
+
+json
+Copy code
+{
+    "creador": "nombre_usuario",
+    "upwd": "password_usuario",
+    "cr_id": 123
+}
+
 
