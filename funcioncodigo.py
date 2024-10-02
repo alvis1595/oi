@@ -324,7 +324,39 @@ BEGIN
         WHEN 'Lenguaje' THEN
             catalog_table := 'cis_lenguaje';
             column_id := 'cl_id';
-        -- Añadir más casos aquí para cada catálogo
+        WHEN 'Aplicacion' THEN
+            catalog_table := 'cis_nombre_aplicacion';
+            column_id := 'cna_id';
+        WHEN 'Pais' THEN
+            catalog_table := 'cis_pais_servidor';
+            column_id := 'cps_id';
+        WHEN 'Proveedor' THEN
+            catalog_table := 'cis_proveedor';
+            column_id := 'cp_id';
+        WHEN 'Responsable' THEN
+            catalog_table := 'cis_responsable_aplicacion';
+            column_id := 'cra_id';
+        WHEN 'Tipo Servidor' THEN
+            catalog_table := 'cis_tipo_servidor';
+            column_id := 'cts_id';
+        WHEN 'Esquema de Continuidad' THEN
+            catalog_table := 'cis_esquema';
+            column_id := 'ce_id';
+        WHEN 'Estrategias de Recuperación Infra' THEN
+            catalog_table := 'cis_estrategias_infra';
+            column_id := 'cei_id';
+        WHEN 'Estrategias de Recuperación Datos' THEN
+            catalog_table := 'cis_estrategias_datos';
+            column_id := 'ced_id';
+        WHEN 'Tiempo de Instalación (Servidor)' THEN
+            catalog_table := 'cis_tiempo_infra_servidor';
+            column_id := 'ctis_id';
+        WHEN 'Tiempo de Instalación (Aplicación)' THEN
+            catalog_table := 'cis_tiempo_infra_aplicacion';
+            column_id := 'ctia_id';
+        WHEN 'Joya de la Corona' THEN
+            catalog_table := 'cis_joya';
+            column_id := 'cj_id';
         ELSE
             RAISE EXCEPTION 'Catálogo no válido: %', catalogo_name;
     END CASE;
