@@ -273,5 +273,63 @@ def catalogos():
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
 ########################################################################################################################################################################
+@cmdb.route('/cmdb/delete_catalog', methods=['POST'])
+@require_api_key
+def deleteCatalog():
+    if request.method == 'POST':
+        connection = None
+        id = request.form.get('id').replace('"', '') 
+        catalogo = request.form.get('cat').replace('"', '') 
+        
+        try:
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+            # Llamada a la función de PostgreSQL para eliminar el registro
+            cursor.execute("SELECT delete_catalog_entry(%s, %s);", (catalogo, id))
+            connection.commit()
+        except Error as e:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar: {e.pgerror}")
+            return jsonify(f"Error al eliminar el registro: {e.pgerror}"), 500
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+        
+    return jsonify("Se eliminó el registro correctamente!")
 
 
+#########################################################################################################################################################################
+sql
+CREATE OR REPLACE FUNCTION delete_catalog_entry(catalogo_name VARCHAR, entry_id VARCHAR)
+RETURNS VOID AS $$
+DECLARE
+    catalog_table TEXT;
+    column_id TEXT;
+BEGIN
+    -- Mapea el nombre del catálogo a su tabla y columna correspondiente
+    CASE catalogo_name
+        WHEN 'Alojamiento' THEN
+            catalog_table := 'cis_alojamiento';
+            column_id := 'ca_id';
+        WHEN 'Desarrollo' THEN
+            catalog_table := 'cis_desarrollo';
+            column_id := 'cd_id';
+        WHEN 'Entorno' THEN
+            catalog_table := 'cis_entorno_ci';
+            column_id := 'cec_id';
+        WHEN 'Lenguaje' THEN
+            catalog_table := 'cis_lenguaje';
+            column_id := 'cl_id';
+        -- Añadir más casos aquí para cada catálogo
+        ELSE
+            RAISE EXCEPTION 'Catálogo no válido: %', catalogo_name;
+    END CASE;
+
+    -- Ejecuta la eliminación basada en el catálogo y ID proporcionados
+    EXECUTE format('DELETE FROM %I WHERE %I = %L', catalog_table, column_id, entry_id);
+END;
+$$ LANGUAGE plpgsql;
