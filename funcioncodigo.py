@@ -122,3 +122,30 @@ def edit_record():
     else:
         return jsonify("Se editó el registro correctamente!")
 ######################################################################################################################################3
+probar
+
+{
+  "creador": "admin",
+  "cr_id": 123,
+  "servidor": "servidor1",
+  "ip": "192.168.1.1",
+  "tipo_servidor": "producción",
+  "entorno_ci": "producción",
+  "pais": "Honduras",
+  "aplicacion": "CRM",
+  "lenguaje": "Python",
+  "proveedor": "ProveedorX",
+  "desarrollo": "Interno",
+  "responsable": "IT",
+  "rep": "Backup",
+  "alojamiento": "On-premise",
+  "esquema_de_continuidad": "Plan A",
+  "estrategias_de_recuperacion_infra": "Estrategia 1",
+  "estrategias_de_recuperacion_datos": "Estrategia 2",
+  "tiempo_de_instalacion_servidor": "2 horas",
+  "tiempo_de_instalacion_aplicacion": "4 horas",
+  "joya_de_la_corona": "Sí",
+  "upwd": "123456"
+}
+
+
