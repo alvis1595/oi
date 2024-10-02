@@ -211,5 +211,67 @@ Copy code
     "upwd": "password_usuario",
     "cr_id": 123
 }
+##################################################################################################################################################################
+CREATE OR REPLACE FUNCTION obtener_catalogos()
+RETURNS JSONB AS $$
+DECLARE
+    tablas TEXT[] := ARRAY[
+        'cis_alojamiento', 'cis_desarrollo', 'cis_entorno_ci', 
+        'cis_lenguaje', 'cis_nombre_aplicacion', 'cis_pais_servidor',
+        'cis_proveedor', 'cis_responsable_aplicacion', 'cis_tipo_servidor',
+        'cis_esquema', 'cis_estrategias_infra', 'cis_estrategias_datos',
+        'cis_tiempo_infra_servidor', 'cis_tiempo_infra_aplicacion', 
+        'cis_joya'
+    ];
+    resultado JSONB := '[]'::JSONB;
+    consulta TEXT;
+    fila JSONB;
+BEGIN
+    -- Iterar sobre cada tabla en el array de tablas
+    FOREACH consulta IN ARRAY tablas LOOP
+        -- Ejecutar la consulta y agregar el resultado a un objeto JSON
+        EXECUTE format('SELECT json_agg(t) FROM %I t', consulta)
+        INTO fila;
+        
+        -- Agregar el resultado de la tabla al JSON final
+        resultado := resultado || jsonb_build_object(consulta, COALESCE(fila, '[]'::jsonb));
+    END LOOP;
+
+    RETURN resultado;
+END;
+$$ LANGUAGE plpgsql;
+
+#######################################################################################################################################################################
+@cmdb.route('/cmdb/catalog', methods=['GET'])
+@require_api_key
+def catalogos():
+    if request.method == 'GET':
+        connection = None
+        result2 = []
+        try:
+            # Conectar a la base de datos
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+            
+            # Ejecutar la función de PostgreSQL
+            cursor.execute("SELECT obtener_catalogos();")
+            result = cursor.fetchone()[0]  # Obtener el resultado en formato JSON
+            
+            result2.append(result)
+            logging.info(json.dumps(result2))
+        except Error as e:
+            logging.error(f"[ERROR]: Algo ha salido mal: {e.pgerror}")
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+                
+    return json.dumps(result2, ensure_ascii=False).encode('utf8')
+
+########################################################################################################################################################################
 
 
