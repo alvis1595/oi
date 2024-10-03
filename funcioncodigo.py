@@ -124,6 +124,9 @@ def edit_record():
 ######################################################################################################################################3
 probar
 
+SELECT actualizar_cis_registro(1, 'servidor1', '192.168.0.1', 'web', 'prod', 'MX', 'app1', 'python', 'Proveedor1', 'Dev1', 'Resp1', 'Rep1', 'Alojamiento1', 'Esquema1', 'Estrategia1', 'Estrategia2', '1h', '2h', 'Si');
+
+
 {
   "creador": "admin",
   "cr_id": 123,
