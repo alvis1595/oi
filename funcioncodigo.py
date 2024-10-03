@@ -365,3 +365,76 @@ BEGIN
     EXECUTE format('DELETE FROM %I WHERE %I = %L', catalog_table, column_id, entry_id);
 END;
 $$ LANGUAGE plpgsql;
+
+
+#######################################catalogo ####################################################################################################33
+
+
+
+
+
+######################################### funcion agregar #################################################################################################################
+CREATE OR REPLACE FUNCTION create_cis_record(
+    cr_servidor text, cr_direccion_ip text, cr_tipo_servidor text, cr_entorno_ci text, 
+    cr_pais text, cr_aplicacion text, cr_lenguaje text, cr_proveedor text, 
+    cr_desarrollo text, cr_mesa_responsable text, cr_rep text, cr_alojamiento text, 
+    cr_esquema_de_continuidad text, cr_estrategias_de_recuperacion_infra text, 
+    cr_estrategias_de_recuperacion_datos text, cr_tiempo_de_instalacion_servidor text, 
+    cr_tiempo_de_instalacion_aplicacion text, cr_joya_de_la_corona text, cr_creador text)
+RETURNS void AS $$
+BEGIN
+    INSERT INTO cis_registros(cr_servidor, cr_direccion_ip, cr_tipo_servidor, cr_entorno_ci, 
+                              cr_pais, cr_aplicacion, cr_lenguaje, cr_proveedor, cr_desarrollo, 
+                              cr_mesa_responsable, cr_rep, cr_alojamiento, cr_esquema_de_continuidad, 
+                              cr_estrategias_de_recuperacion_infra, cr_estrategias_de_recuperacion_datos, 
+                              cr_tiempo_de_instalacion_servidor, cr_tiempo_de_instalacion_aplicacion, 
+                              cr_joya_de_la_corona, cr_creador, cr_fecha)
+    VALUES (cr_servidor, cr_direccion_ip, cr_tipo_servidor, cr_entorno_ci, cr_pais, cr_aplicacion, 
+            cr_lenguaje, cr_proveedor, cr_desarrollo, cr_mesa_responsable, cr_rep, cr_alojamiento, 
+            cr_esquema_de_continuidad, cr_estrategias_de_recuperacion_infra, cr_estrategias_de_recuperacion_datos, 
+            cr_tiempo_de_instalacion_servidor, cr_tiempo_de_instalacion_aplicacion, cr_joya_de_la_corona, cr_creador, now());
+END;
+$$ LANGUAGE plpgsql;
+
+##############api##############
+@cmdb.route('/cmdb/create', methods=['POST'])
+@require_api_key
+def create_record():
+    try:
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')
+        
+        # Obtén los datos desde la solicitud JSON
+        new_record = (
+            data['servidor'], data['ip'], data['tipo_servidor'], data['entorno_ci'], data['pais'], 
+            data['aplicacion'], data['lenguaje'], data['proveedor'], data['desarrollo'], 
+            data['responsable'], data['rep'], data['alojamiento'], data['esquema_de_continuidad'], 
+            data['estrategias_de_recuperacion_infra'], data['estrategias_de_recuperacion_datos'], 
+            data['tiempo_de_instalacion_servidor'], data['tiempo_de_instalacion_aplicacion'], 
+            data['joya_de_la_corona'], creador
+        )
+
+        # Conexión a la base de datos
+        connection = psycopg2.connect(user=db_User,
+                                      password=db_Pass,
+                                      host=db_Host,
+                                      port=db_Port,
+                                      database="cmdb_integracion")
+        cursor = connection.cursor()
+
+        # Llamada a la función almacenada
+        cursor.callproc('create_cis_record', new_record)
+
+        # Confirmar los cambios en la base de datos
+        connection.commit()
+        
+        return make_response('', 201)
+
+    except Error as e:
+        logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar: {e.pgerror}")
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+    return make_response({'status': 'FAILED', 'message': 'Algo ha salido mal al guardar registro.'}, 500)
