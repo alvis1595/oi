@@ -565,3 +565,223 @@ def addCatalog():
         else: 
             return jsonify(result)
 
+
+
+#####################################################################################################################################
+update catalogo
+CREATE OR REPLACE FUNCTION update_catalogo(
+    table_name TEXT,
+    column_id TEXT,
+    column_data TEXT,
+    value TEXT,
+    record_id TEXT
+)
+RETURNS TEXT AS $$
+DECLARE
+    exists_check INTEGER;
+BEGIN
+    -- Verificar si el valor ya existe
+    EXECUTE format('SELECT COUNT(1) FROM %I WHERE %I = $1', table_name, column_data)
+    INTO exists_check
+    USING value;
+
+    IF exists_check > 0 THEN
+        RETURN 'ERROR: El dato ya existe en el catálogo.';
+    END IF;
+
+    -- Actualizar el registro
+    EXECUTE format('UPDATE %I SET %I = $1 WHERE %I = $2', table_name, column_data, column_id)
+    USING value, record_id;
+
+    RETURN 'Se editó el registro correctamente!';
+END;
+$$ LANGUAGE plpgsql;
+######################## api ##########################################################
+@cmdb.route('/cmdb/edit_catalog', methods=['POST'])
+@require_api_key
+def editCatalog():
+    if request.method == 'POST':
+        errorcode = 0
+        errormsg = ""
+        connection = None
+
+        # Listas originales
+        catalogos = ["Alojamiento", "Desarrollo", "Entorno", "Lenguaje", 
+                     "Aplicacion", "Pais", "Proveedor", "Responsable", 
+                     "Tipo Servidor", "Esquema de Continuidad", 
+                     "Estrategias de Recuperación Infra", 
+                     "Estrategias de Recuperación Datos",
+                     "Tiempo de Instalación (Servidor)",
+                     "Tiempo de Instalación (Aplicación)", 
+                     "Joya de la Corona"]
+        
+        tables = ["cis_alojamiento", "cis_desarrollo", "cis_entorno_ci", 
+                  "cis_lenguaje", "cis_nombre_aplicacion", "cis_pais_servidor",
+                  "cis_proveedor", "cis_responsable_aplicacion", "cis_tipo_servidor",
+                  "cis_esquema", "cis_estrategias_infra", "cis_estrategias_datos",
+                  "cis_tiempo_infra_servidor", "cis_tiempo_infra_aplicacion", 
+                  "cis_joya"]
+        
+        col_id = ["ca_id", "cd_id", "cec_id", "cl_id", "cna_id", 
+                  "cps_id", "cp_id", "cra_id", "cts_id", "ce_id",
+                  "cei_id", "ced_id", "ctis_id", "ctia_id", "cj_id"]
+        
+        col_data = ["ca_tipo_alojamiento", "cd_desarrollo", "cec_tipo", 
+                    "cl_lenguaje", "cna_aplicacion", "cps_servidor", 
+                    "cp_proveedor", "cra_mesa", "cts_tipo_servidor", 
+                    "ce_esquema", "cei_estrategias", "ced_estrategias",
+                    "ctis_tiempo", "ctia_tiempo", "cj_joya"]
+
+        # Obtener los datos del request y limpiar comillas
+        id = request.form.get('id').replace('"', '') 
+        value = request.form.get('value').replace('"', '') 
+        catalogo = request.form.get('cat').replace('"', '') 
+
+        if not id or not value or not catalogo:
+            return jsonify("ERROR: Parámetros inválidos o incompletos."), 400
+
+        try:
+            # Verificar si el catálogo existe en la lista
+            if catalogo not in catalogos:
+                return jsonify("ERROR: Catálogo inválido."), 400
+            
+            # Obtener los índices correspondientes
+            idx = catalogos.index(catalogo)
+            table = tables[idx]
+            column_id = col_id[idx]
+            column_data = col_data[idx]
+
+            # Conectar a la base de datos
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+
+            # Llamar a la función de PostgreSQL
+            cursor.execute("SELECT update_catalogo(%s, %s, %s, %s, %s)", 
+                           (table, column_id, column_data, value, id))
+
+            # Obtener el mensaje de la función
+            result = cursor.fetchone()[0]
+
+            # Validar la respuesta de la función
+            if "ERROR" in result:
+                return jsonify(result), 400
+
+            connection.commit()
+            return jsonify(result), 200
+
+        except (Exception, psycopg2.Error) as error:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar editar: {error}")
+            return jsonify(str(error)), 500
+
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+ para porbar 
+. Añadir parámetros en el cuerpo (Body)
+Haz clic en la pestaña Body.
+
+Selecciona la opción x-www-form-urlencoded.
+
+Añade los siguientes campos clave-valor, que representan los datos que envías al servidor:
+
+id: El identificador del registro que quieres editar (ejemplo: 1).
+value: El nuevo valor que deseas asignar (ejemplo: NuevoValor).
+cat: El nombre del catálogo donde se encuentra el registro que vas a editar (ejemplo: Alojamiento).
+
+
+#############################################################################################################################333
+delete catalogo
+@cmdb.route('/cmdb/delete_catalog', methods=['POST'])
+@require_api_key
+def deleteCatalog():
+    if request.method == 'POST':
+        connection = None
+        id = request.form.get('id', '').replace('"', '') 
+        catalogo = request.form.get('cat', '').replace('"', '') 
+
+        catalogos = ["Alojamiento", "Desarrollo", "Entorno", "Lenguaje", 
+                     "Aplicacion", "Pais", "Proveedor", "Responsable", "Tipo Servidor",
+                     "Esquema de Continuidad", "Estrategias de Recuperación Infra",
+                     "Estrategias de Recuperación Datos",
+                     "Tiempo de Instalación (Servidor)",
+                     "Tiempo de Instalación (Aplicación)", "Joya de la Corona"]
+                     
+        tables = ["cis_alojamiento", "cis_desarrollo", "cis_entorno_ci", 
+                  "cis_lenguaje", "cis_nombre_aplicacion", "cis_pais_servidor",
+                  "cis_proveedor", "cis_responsable_aplicacion", "cis_tipo_servidor",
+                  "cis_esquema", "cis_estrategias_infra", "cis_estrategias_datos",
+                  "cis_tiempo_infra_servidor", "cis_tiempo_infra_aplicacion",
+                  "cis_joya"]
+                  
+        col_id = ["ca_id", "cd_id", "cec_id", "cl_id", "cna_id", 
+                  "cps_id", "cp_id", "cra_id", "cts_id", "ce_id",
+                  "cei_id", "ced_id", "ctis_id", "ctia_id", "cj_id"]
+
+        # Obtener la tabla y la columna ID correspondientes
+        catalog = None
+        c_id = None
+
+        for i, cat in enumerate(catalogos):
+            if cat == catalogo:
+                catalog = tables[i]
+                c_id = col_id[i]
+                break
+
+        if not catalog or not c_id:
+            return jsonify({"error": "Catálogo no válido"}), 400
+
+        try:
+            # Conectar a la base de datos
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+            # Llamar a la función de PostgreSQL para eliminar
+            cursor.callproc('delete_from_catalog', (catalog, id))
+            connection.commit()
+
+        except psycopg2.Error as e:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar: {e.pgerror}")
+            return jsonify({"error": "Error al eliminar el registro"}), 500
+
+        finally:
+            # Cerrar la conexión y el cursor
+            if connection:
+                cursor.close()
+                connection.close()
+
+        return jsonify("Se eliminó el registro correctamente!")
+
+    return jsonify({"error": "Método no permitido"}), 405
+##########################################################################################################################################
+CREATE OR REPLACE FUNCTION delete_from_catalog(catalog_name TEXT, record_id INT)
+RETURNS VOID AS $$
+DECLARE
+    query TEXT;
+BEGIN
+    -- Construir la consulta de eliminación
+    query := format('DELETE FROM %I WHERE id = %L', catalog_name, record_id);
+    
+    -- Ejecutar la consulta dinámica
+    EXECUTE query;
+EXCEPTION
+    WHEN others THEN
+        RAISE EXCEPTION 'Error al eliminar el registro: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql;
+
+#####################################################################################################################################################
+Agregar Body:
+
+Selecciona Body y luego elige la opción x-www-form-urlencoded.
+Agrega los siguientes parámetros:
+id: el ID del registro que deseas eliminar.
+cat: el nombre del catálogo (por ejemplo, "Alojamiento")
