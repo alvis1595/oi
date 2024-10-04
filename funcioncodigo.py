@@ -917,3 +917,104 @@ Ejemplo:
 value: "Alojamiento1"
 tabValue: "Alojamiento"
 
+#########################################################################################################################################
+CREATE OR REPLACE FUNCTION update_catalog(
+    catalogo TEXT, 
+    item_id TEXT, 
+    new_value TEXT
+) 
+RETURNS TEXT AS $$
+DECLARE
+    catalog TEXT;
+    c_id TEXT;
+    c_data TEXT;
+    result_count INT;
+
+    catalogos TEXT[] := ARRAY['Alojamiento', 'Desarrollo', 'Entorno', 'Lenguaje', 
+                     'Aplicacion', 'Pais', 'Proveedor', 'Responsable', 'Tipo Servidor',
+                     'Esquema de Continuidad', 'Estrategias de Recuperación Infra',
+                     'Estrategias de Recuperación Datos', 'Tiempo de Instalación (Servidor)',
+                     'Tiempo de Instalación (Aplicación)', 'Joya de la Corona'];
+
+    tables TEXT[] := ARRAY['cis_alojamiento', 'cis_desarrollo', 'cis_entorno_ci', 
+                  'cis_lenguaje', 'cis_nombre_aplicacion', 'cis_pais_servidor',
+                  'cis_proveedor', 'cis_responsable_aplicacion', 'cis_tipo_servidor',
+                  'cis_esquema', 'cis_estrategias_infra', 'cis_estrategias_datos',
+                  'cis_tiempo_infra_servidor', 'cis_tiempo_infra_aplicacion', 'cis_joya'];
+
+    col_id TEXT[] := ARRAY['ca_id', 'cd_id', 'cec_id', 'cl_id', 'cna_id', 
+                  'cps_id', 'cp_id', 'cra_id', 'cts_id', 'ce_id', 
+                  'cei_id', 'ced_id', 'ctis_id', 'ctia_id', 'cj_id'];
+
+    col_data TEXT[] := ARRAY['ca_tipo_alojamiento', 'cd_desarrollo', 'cec_tipo', 
+                    'cl_lenguaje', 'cna_aplicacion', 'cps_servidor', 
+                    'cp_proveedor', 'cra_mesa', 'cts_tipo_servidor', 'ce_esquema',
+                    'cei_estrategias', 'ced_estrategias', 'ctis_tiempo', 'ctia_tiempo', 'cj_joya'];
+
+BEGIN
+    -- Identificar el índice del catálogo
+    FOR i IN 1..array_length(catalogos, 1) LOOP
+        IF catalogos[i] = catalogo THEN
+            catalog := tables[i];
+            c_id := col_id[i];
+            c_data := col_data[i];
+            EXIT;
+        END IF;
+    END LOOP;
+
+    -- Verificar si el nuevo valor ya existe
+    EXECUTE format('SELECT COUNT(*) FROM %I WHERE %I = $1', catalog, c_data) INTO result_count USING new_value;
+    
+    IF result_count > 0 THEN
+        RETURN 'ERROR: El dato ya existe en el catálogo.';
+    END IF;
+
+    -- Actualizar el valor
+    EXECUTE format('UPDATE %I SET %I = $1 WHERE %I = $2', catalog, c_data, c_id) USING new_value, item_id;
+
+    RETURN 'Se editó el registro correctamente!';
+END;
+$$ LANGUAGE plpgsql;
+
+@cmdb.route('/cmdb/edit_catalog', methods=['POST'])
+@require_api_key
+def editCatalog():
+    if request.method == 'POST':
+        try:
+            catalogo = request.form.get('cat').replace('"', '')
+            id = request.form.get('id').replace('"', '')
+            value = request.form.get('value').replace('"', '')
+
+            # Conectar a la base de datos y ejecutar la función
+            connection = psycopg2.connect(user=db_User, password=db_Pass, host=db_Host, port=db_Port, database="cmdb_integracion")
+            cursor = connection.cursor()
+            cursor.callproc('update_catalog', (catalogo, id, value))
+            result = cursor.fetchone()[0]
+            
+            connection.commit()
+
+        except Exception as e:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar editar: {str(e)}")
+            return jsonify({"error": "Ha ocurrido un error al editar el catálogo."}), 500
+
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
+        return jsonify({"message": result})
+
+
+
+
+
+
+
+
+        La ruta de la API que modificamos es /cmdb/edit_catalog, y espera recibir una solicitud POST con los siguientes parámetros:
+
+id: el identificador del elemento a modificar.
+value: el nuevo valor que se asignará.
+cat: el nombre del catálogo.
+#################################################################################################################################################################################
+
