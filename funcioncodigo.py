@@ -1017,4 +1017,69 @@ id: el identificador del elemento a modificar.
 value: el nuevo valor que se asignará.
 cat: el nombre del catálogo.
 #################################################################################################################################################################################
+CREATE OR REPLACE FUNCTION actualizar_catalog(catalog text, value text, id text)
+RETURNS void AS $$
+DECLARE
+    table_name text;
+    column_name text;
+BEGIN
+    -- Mapeo de catálogos a tablas y columnas
+    IF catalog = 'Alojamiento' THEN
+        table_name := 'cis_alojamiento';
+        column_name := 'ca_tipo_alojamiento';
+    ELSIF catalog = 'Desarrollo' THEN
+        table_name := 'cis_desarrollo';
+        column_name := 'cd_desarrollo';
+    ELSIF catalog = 'Entorno' THEN
+        table_name := 'cis_entorno_ci';
+        column_name := 'cec_tipo';
+    ELSIF catalog = 'Lenguaje' THEN
+        table_name := 'cis_lenguaje';
+        column_name := 'cl_lenguaje';
+    ELSIF catalog = 'Aplicacion' THEN
+        table_name := 'cis_nombre_aplicacion';
+        column_name := 'cna_aplicacion';
+    ELSIF catalog = 'Pais' THEN
+        table_name := 'cis_pais_servidor';
+        column_name := 'cps_servidor';
+    ELSIF catalog = 'Proveedor' THEN
+        table_name := 'cis_proveedor';
+        column_name := 'cp_proveedor';
+    ELSIF catalog = 'Responsable' THEN
+        table_name := 'cis_responsable_aplicacion';
+        column_name := 'cra_mesa';
+    ELSIF catalog = 'Tipo Servidor' THEN
+        table_name := 'cis_tipo_servidor';
+        column_name := 'cts_tipo_servidor';
+    ELSIF catalog = 'Esquema de Continuidad' THEN
+        table_name := 'cis_esquema';
+        column_name := 'ce_esquema';
+    ELSIF catalog = 'Estrategias de Recuperación Infra' THEN
+        table_name := 'cis_estrategias_infra';
+        column_name := 'cei_estrategias';
+    ELSIF catalog = 'Estrategias de Recuperación Datos' THEN
+        table_name := 'cis_estrategias_datos';
+        column_name := 'ced_estrategias';
+    ELSIF catalog = 'Tiempo de Instalación (Servidor)' THEN
+        table_name := 'cis_tiempo_infra_servidor';
+        column_name := 'ctis_tiempo';
+    ELSIF catalog = 'Tiempo de Instalación (Aplicación)' THEN
+        table_name := 'cis_tiempo_infra_aplicacion';
+        column_name := 'ctia_tiempo';
+    ELSIF catalog = 'Joya de la Corona' THEN
+        table_name := 'cis_joya';
+        column_name := 'cj_joya';
+    ELSE
+        RAISE EXCEPTION 'ERROR: Catálogo no reconocido: %', catalog;
+    END IF;
+
+    -- Ejecutar la consulta con castings explícitos
+    EXECUTE format('UPDATE %I SET %I = $1 WHERE ca_id = $2', table_name, column_name)
+    USING value::varchar, id::integer; -- Realiza el casting explícito aquí
+
+EXCEPTION
+    WHEN others THEN
+        RAISE NOTICE 'Error: %', SQLERRM; -- Captura el error y lo imprime
+END;
+$$ LANGUAGE plpgsql;
 
