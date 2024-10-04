@@ -5,6 +5,7 @@ CREATE OR REPLACE FUNCTION remove_catalog_item(
 DECLARE
     table_name TEXT;
     column_id TEXT;
+    exists_count INT;
 BEGIN
     -- Mapeo de catálogos a tablas y columnas de ID
     IF catalog_name = 'Alojamiento' THEN
@@ -57,11 +58,10 @@ BEGIN
     END IF;
 
     -- Verifica si el ID existe en la tabla
-    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_tables WHERE tablename = table_name) THEN
-        RETURN 'ERROR: La tabla no existe.';
-    END IF;
+    EXECUTE FORMAT('SELECT COUNT(*) FROM %I WHERE %I = $1', table_name, column_id)
+    INTO exists_count USING id;
 
-    IF NOT EXISTS (EXECUTE FORMAT('SELECT 1 FROM %I WHERE %I = $1', table_name, column_id) USING id) THEN
+    IF exists_count = 0 THEN
         RETURN 'ERROR: El ID no existe en el catálogo.';
     END IF;
 
