@@ -785,3 +785,135 @@ Selecciona Body y luego elige la opción x-www-form-urlencoded.
 Agrega los siguientes parámetros:
 id: el ID del registro que deseas eliminar.
 cat: el nombre del catálogo (por ejemplo, "Alojamiento")
+
+
+
+#####################################################################################################################################################3
+probar eliminar
+@cmdb.route('/cmdb/remove_catalog', methods=['POST'])
+@require_api_key
+def removeCatalog():
+    if request.method == 'POST':
+        errorcode = 0
+        errormsg = ""
+        result = []
+        connection = None
+
+        value = request.form.get('value').replace('"', '') 
+        catalogo = request.form.get('tabValue').replace('"', '') 
+        
+        try:
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+
+            # Llama a la función almacenada en PostgreSQL
+            cursor.execute("SELECT remove_catalog_item(%s, %s)", (catalogo, value))
+            result = cursor.fetchone()[0]  # Obtiene el resultado devuelto por la función
+
+            connection.commit()
+
+        except Error as e:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar: {e.pgerror}")
+            errormsg = jsonify(f"ERROR: {e.pgerror}")
+            errorcode = 1
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+        
+        if errorcode != 0:
+            return errormsg
+        else: 
+            return jsonify(result)
+
+
+CREATE OR REPLACE FUNCTION remove_catalog_item(
+    catalog_name TEXT,
+    value TEXT
+) RETURNS TEXT AS $$
+DECLARE
+    table_name TEXT;
+    column_name TEXT;
+    query TEXT;
+    check_query TEXT;
+    exists_count INT;
+BEGIN
+    -- Mapeo de catálogos a tablas y columnas
+    IF catalog_name = 'Alojamiento' THEN
+        table_name := 'cis_alojamiento';
+        column_name := 'ca_tipo_alojamiento';
+    ELSIF catalog_name = 'Desarrollo' THEN
+        table_name := 'cis_desarrollo';
+        column_name := 'cd_desarrollo';
+    ELSIF catalog_name = 'Entorno' THEN
+        table_name := 'cis_entorno_ci';
+        column_name := 'cec_tipo';
+    ELSIF catalog_name = 'Lenguaje' THEN
+        table_name := 'cis_lenguaje';
+        column_name := 'cl_lenguaje';
+    ELSIF catalog_name = 'Aplicacion' THEN
+        table_name := 'cis_nombre_aplicacion';
+        column_name := 'cna_aplicacion';
+    ELSIF catalog_name = 'Pais' THEN
+        table_name := 'cis_pais_servidor';
+        column_name := 'cps_servidor';
+    ELSIF catalog_name = 'Proveedor' THEN
+        table_name := 'cis_proveedor';
+        column_name := 'cp_proveedor';
+    ELSIF catalog_name = 'Responsable' THEN
+        table_name := 'cis_responsable_aplicacion';
+        column_name := 'cra_mesa';
+    ELSIF catalog_name = 'Tipo Servidor' THEN
+        table_name := 'cis_tipo_servidor';
+        column_name := 'cts_tipo_servidor';
+    ELSIF catalog_name = 'Esquema de Continuidad' THEN
+        table_name := 'cis_esquema';
+        column_name := 'ce_esquema';
+    ELSIF catalog_name = 'Estrategias de Recuperación Infra' THEN
+        table_name := 'cis_estrategias_infra';
+        column_name := 'cei_estrategias';
+    ELSIF catalog_name = 'Estrategias de Recuperación Datos' THEN
+        table_name := 'cis_estrategias_datos';
+        column_name := 'ced_estrategias';
+    ELSIF catalog_name = 'Tiempo de Instalación (Servidor)' THEN
+        table_name := 'cis_tiempo_infra_servidor';
+        column_name := 'ctis_tiempo';
+    ELSIF catalog_name = 'Tiempo de Instalación (Aplicación)' THEN
+        table_name := 'cis_tiempo_infra_aplicacion';
+        column_name := 'ctia_tiempo';
+    ELSIF catalog_name = 'Joya de la Corona' THEN
+        table_name := 'cis_joya';
+        column_name := 'cj_joya';
+    ELSE
+        RETURN 'ERROR: Catálogo no reconocido.';
+    END IF;
+
+    -- Verifica si el valor existe en la tabla
+    check_query := FORMAT('SELECT COUNT(*) FROM %I WHERE %I = $1', table_name, column_name);
+    EXECUTE check_query INTO exists_count USING value;
+
+    IF exists_count = 0 THEN
+        RETURN 'ERROR: El dato no existe en el catálogo.';
+    END IF;
+
+    -- Elimina el valor
+    query := FORMAT('DELETE FROM %I WHERE %I = $1', table_name, column_name);
+    EXECUTE query USING value;
+
+    RETURN 'Se eliminó el registro correctamente!';
+END;
+$$ LANGUAGE plpgsql;
+
+
+Body: En la pestaña "Body", selecciona x-www-form-urlencoded y agrega los siguientes parámetros:
+value: El valor que deseas eliminar.
+tabValue: El nombre del catálogo del cual deseas eliminar el valor.
+Ejemplo:
+
+value: "Alojamiento1"
+tabValue: "Alojamiento"
+
