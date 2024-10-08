@@ -111,6 +111,11 @@ Inicio cadena:
 fin cadena:
 tiempo": "16-18hrs"}], [{"cj_id": 1, "cj_joya": "SI"}, {"cj_id": 2, "cj_joya": "NO"}]]]
 
+inicio cadena:
+[{"cis_joya": [{"cj_id": 1, "cj_joya": "SI"}, {"cj_id": 2, "cj_joya": "NO"}],
+fin cadena:
+ 6, "ctia_tiempo": "12-14hrs"}, {"ctia_id": 7, "ctia_tiempo": "16-18hrs"}]}]
+
 
 
 ##############################################################################################################################
