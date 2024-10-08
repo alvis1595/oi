@@ -32,30 +32,27 @@ RETURNS JSONB AS $$
 DECLARE
     resultado JSONB;
 BEGIN
-    -- Unificamos todos los resultados en un array sin anidación extra
-    resultado := jsonb_agg(
-        jsonb_build_object(
-            'cis_alojamiento', (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t),
-            'cis_desarrollo', (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t),
-            'cis_entorno_ci', (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t),
-            'cis_lenguaje', (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t),
-            'cis_nombre_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t),
-            'cis_pais_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t),
-            'cis_proveedor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t),
-            'cis_responsable_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t),
-            'cis_tipo_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t),
-            'cis_esquema', (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t),
-            'cis_estrategias_infra', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t),
-            'cis_estrategias_datos', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t),
-            'cis_tiempo_infra_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t),
-            'cis_tiempo_infra_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t),
-            'cis_joya', (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t)
-        )
-    );
+    -- Unificamos los resultados de cada tabla en un array plano
+    resultado := jsonb_agg(jsonb_agg(row_to_json(cis_alojamiento)) || 
+                           jsonb_agg(row_to_json(cis_desarrollo)) || 
+                           jsonb_agg(row_to_json(cis_entorno_ci)) || 
+                           jsonb_agg(row_to_json(cis_lenguaje)) || 
+                           jsonb_agg(row_to_json(cis_nombre_aplicacion)) || 
+                           jsonb_agg(row_to_json(cis_pais_servidor)) || 
+                           jsonb_agg(row_to_json(cis_proveedor)) || 
+                           jsonb_agg(row_to_json(cis_responsable_aplicacion)) || 
+                           jsonb_agg(row_to_json(cis_tipo_servidor)) || 
+                           jsonb_agg(row_to_json(cis_esquema)) || 
+                           jsonb_agg(row_to_json(cis_estrategias_infra)) || 
+                           jsonb_agg(row_to_json(cis_estrategias_datos)) || 
+                           jsonb_agg(row_to_json(cis_tiempo_infra_servidor)) || 
+                           jsonb_agg(row_to_json(cis_tiempo_infra_aplicacion)) || 
+                           jsonb_agg(row_to_json(cis_joya)));
 
     RETURN resultado;
 END;
 $$ LANGUAGE plpgsql;
+
 
 --------------------------------------------------------------------------------------------------------------
 
