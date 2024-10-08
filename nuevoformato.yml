@@ -98,6 +98,18 @@ def catalogos():
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
 
+Inicio
+[[{"ca_id": 21, "ca_tipo_alojamiento": "Pruebas A"}, {"ca_id": 22, "ca_tipo_alojamiento": "Pruebas BG"},
+Fin de la cadena:
+"ctia_tiempo": "22-24hrs"}, {"ctia_id": 11, "ctia_tiempo": "Más de 24 horas"}, {"ctia_id": 6, "ctia_tiempo": "12-14hrs"}, {"ctia_id": 7, "ctia_tiempo": "16-18hrs"}], [{"cj_id": 1, "cj_joya": "SI"}, {"cj_id": 2, "cj_joya": "NO"}]]
+
+
+Inicio:
+[[{"obtener_catalogos": [{"ca_id": 21, "ca_tipo_alojamiento": "Pruebas A"}, {"ca_id": 22, "ca_tipo_alojamiento": "Pruebas BG"},
+Fin de la cadena:
+"obtener_catalogos": [{"cj_id": 1, "cj_joya": "SI"}, {"cj_id": 2, "cj_joya": "NO"}]}]]
+
+
 
 ##############################################################################################################################
 
