@@ -34,36 +34,22 @@ DECLARE
 BEGIN
     -- Unificamos todos los resultados en un array sin anidación extra
     resultado := jsonb_agg(
-        jsonb_agg(row_to_json(t)) FROM (
-            SELECT * FROM cis_alojamiento
-            UNION ALL
-            SELECT * FROM cis_desarrollo
-            UNION ALL
-            SELECT * FROM cis_entorno_ci
-            UNION ALL
-            SELECT * FROM cis_lenguaje
-            UNION ALL
-            SELECT * FROM cis_nombre_aplicacion
-            UNION ALL
-            SELECT * FROM cis_pais_servidor
-            UNION ALL
-            SELECT * FROM cis_proveedor
-            UNION ALL
-            SELECT * FROM cis_responsable_aplicacion
-            UNION ALL
-            SELECT * FROM cis_tipo_servidor
-            UNION ALL
-            SELECT * FROM cis_esquema
-            UNION ALL
-            SELECT * FROM cis_estrategias_infra
-            UNION ALL
-            SELECT * FROM cis_estrategias_datos
-            UNION ALL
-            SELECT * FROM cis_tiempo_infra_servidor
-            UNION ALL
-            SELECT * FROM cis_tiempo_infra_aplicacion
-            UNION ALL
-            SELECT * FROM cis_joya
+        jsonb_build_object(
+            'cis_alojamiento', (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t),
+            'cis_desarrollo', (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t),
+            'cis_entorno_ci', (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t),
+            'cis_lenguaje', (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t),
+            'cis_nombre_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t),
+            'cis_pais_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t),
+            'cis_proveedor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t),
+            'cis_responsable_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t),
+            'cis_tipo_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t),
+            'cis_esquema', (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t),
+            'cis_estrategias_infra', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t),
+            'cis_estrategias_datos', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t),
+            'cis_tiempo_infra_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t),
+            'cis_tiempo_infra_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t),
+            'cis_joya', (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t)
         )
     );
 
