@@ -1,135 +1,70 @@
 ################## catalogos ############################################33
 CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS JSONB AS $$
+RETURNS TABLE(
+    tabla_name TEXT,
+    resultado JSONB
+) AS $$
 DECLARE
-    tablas TEXT[] := ARRAY[
-        'cis_alojamiento', 'cis_desarrollo', 'cis_entorno_ci', 
-        'cis_lenguaje', 'cis_nombre_aplicacion', 'cis_pais_servidor',
-        'cis_proveedor', 'cis_responsable_aplicacion', 'cis_tipo_servidor',
-        'cis_esquema', 'cis_estrategias_infra', 'cis_estrategias_datos',
-        'cis_tiempo_infra_servidor', 'cis_tiempo_infra_aplicacion', 
-        'cis_joya'
-    ];
-    resultado JSONB := '[]'::JSONB;  -- Iniciar un arreglo vacío
-    fila JSONB;
+    record RECORD;
 BEGIN
-    -- Iterar sobre cada tabla en el array de tablas
-    FOREACH consulta IN ARRAY tablas LOOP
-        -- Ejecutar la consulta y agregar el resultado como una lista
-        EXECUTE format('SELECT json_agg(t) FROM %I t', consulta)
-        INTO fila;
-        
-        -- Asegurarse de que fila no sea nula y agregarla a la lista de resultados
-        resultado := resultado || COALESCE(fila, '[]'::jsonb);
+    -- Consultar todas las tablas y devolver los resultados en formato JSON
+    FOR record IN 
+        SELECT * FROM (
+            VALUES 
+                ('cis_alojamiento', (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t)),
+                ('cis_desarrollo', (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t)),
+                ('cis_entorno_ci', (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t)),
+                ('cis_lenguaje', (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t)),
+                ('cis_nombre_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t)),
+                ('cis_pais_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t)),
+                ('cis_proveedor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t)),
+                ('cis_responsable_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t)),
+                ('cis_tipo_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t)),
+                ('cis_esquema', (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t)),
+                ('cis_estrategias_infra', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t)),
+                ('cis_estrategias_datos', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t)),
+                ('cis_tiempo_infra_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t)),
+                ('cis_tiempo_infra_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t)),
+                ('cis_joya', (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t))
+        ) AS resultado(tabla_name, resultado)
+    LOOP
+        RETURN NEXT record;
     END LOOP;
-
-    RETURN resultado;
+    RETURN;
 END;
 $$ LANGUAGE plpgsql;
-
-
-
-CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS JSONB AS $$
-DECLARE
-    resultado JSONB := '[]'::JSONB;  -- Iniciar un arreglo vacío
-    fila JSONB;
-BEGIN
-    -- Ejecutar la consulta para cada tabla y agregar los resultados
-    -- Alojamiento
-    EXECUTE 'SELECT json_agg(t) FROM cis_alojamiento t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Desarrollo
-    EXECUTE 'SELECT json_agg(t) FROM cis_desarrollo t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Entorno CI
-    EXECUTE 'SELECT json_agg(t) FROM cis_entorno_ci t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Lenguaje
-    EXECUTE 'SELECT json_agg(t) FROM cis_lenguaje t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Nombre aplicación
-    EXECUTE 'SELECT json_agg(t) FROM cis_nombre_aplicacion t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Proveedor
-    EXECUTE 'SELECT json_agg(t) FROM cis_proveedor t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Responsable aplicación
-    EXECUTE 'SELECT json_agg(t) FROM cis_responsable_aplicacion t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Tipo servidor
-    EXECUTE 'SELECT json_agg(t) FROM cis_tipo_servidor t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Esquema
-    EXECUTE 'SELECT json_agg(t) FROM cis_esquema t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Estrategias infraestructura
-    EXECUTE 'SELECT json_agg(t) FROM cis_estrategias_infra t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Estrategias datos
-    EXECUTE 'SELECT json_agg(t) FROM cis_estrategias_datos t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Tiempo infraestructura servidor
-    EXECUTE 'SELECT json_agg(t) FROM cis_tiempo_infra_servidor t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Tiempo infraestructura aplicación
-    EXECUTE 'SELECT json_agg(t) FROM cis_tiempo_infra_aplicacion t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    -- Joya
-    EXECUTE 'SELECT json_agg(t) FROM cis_joya t' INTO fila;
-    resultado := resultado || COALESCE(fila, '[]'::jsonb);
-
-    RETURN resultado;
-END;
-$$ LANGUAGE plpgsql;
-
-
 @cmdb.route('/cmdb/catalog', methods=['GET'])
 @require_api_key
 def catalogos():
     if request.method == 'GET':
-        connection = None
         result2 = []
+        connection = None
+
         try:
-            # Conectar a la base de datos
+            # Abriendo la conexión a la base de datos
             connection = psycopg2.connect(user=db_User,
                                           password=db_Pass,
                                           host=db_Host,
                                           port=db_Port,
                                           database="cmdb_integracion")
-            cursor = connection.cursor()
+            cursor = connection.cursor(cursor_factory=RealDictCursor)
             
-            # Ejecutar la función de PostgreSQL
-            cursor.execute("SELECT obtener_catalogos();")
-            result = cursor.fetchone()[0]  # Obtener el resultado en formato JSON
-            
-            # El resultado ya está en la forma de una lista de listas, asignarlo directamente
-            result2 = result  
-            
-            logging.info(json.dumps(result2))
-        except Error as e:
-            logging.error(f"[ERROR]: Algo ha salido mal: {e.pgerror}")
+            # Llamar a la función en PostgreSQL
+            cursor.execute("SELECT * FROM obtener_catalogos();")
+            result2 = cursor.fetchall()
+
+            logging.info("Consulta completada exitosamente")
+
+        except (Exception, psycopg2.Error) as e:
+            logging.error(f"[ERROR]: Algo ha salido mal: {str(e)}")
+            return json.dumps({"error": "Error al consultar la base de datos"}, ensure_ascii=False).encode('utf8'), 500
+
         finally:
             if connection:
                 cursor.close()
                 connection.close()
-                
-    # Devolver el JSON correctamente al frontend
-    return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
+        return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
 ##############################################################################################################################
 
