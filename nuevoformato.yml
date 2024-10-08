@@ -27,6 +27,49 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 --------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION obtener_catalogos()
+RETURNS JSONB AS $$
+DECLARE
+    resultado JSONB;
+BEGIN
+    -- Unificamos todos los resultados en un array sin anidación extra
+    resultado := jsonb_agg(
+        jsonb_agg(row_to_json(t)) FROM (
+            SELECT * FROM cis_alojamiento
+            UNION ALL
+            SELECT * FROM cis_desarrollo
+            UNION ALL
+            SELECT * FROM cis_entorno_ci
+            UNION ALL
+            SELECT * FROM cis_lenguaje
+            UNION ALL
+            SELECT * FROM cis_nombre_aplicacion
+            UNION ALL
+            SELECT * FROM cis_pais_servidor
+            UNION ALL
+            SELECT * FROM cis_proveedor
+            UNION ALL
+            SELECT * FROM cis_responsable_aplicacion
+            UNION ALL
+            SELECT * FROM cis_tipo_servidor
+            UNION ALL
+            SELECT * FROM cis_esquema
+            UNION ALL
+            SELECT * FROM cis_estrategias_infra
+            UNION ALL
+            SELECT * FROM cis_estrategias_datos
+            UNION ALL
+            SELECT * FROM cis_tiempo_infra_servidor
+            UNION ALL
+            SELECT * FROM cis_tiempo_infra_aplicacion
+            UNION ALL
+            SELECT * FROM cis_joya
+        )
+    );
+
+    RETURN resultado;
+END;
+$$ LANGUAGE plpgsql;
 
 --------------------------------------------------------------------------------------------------------------
 
