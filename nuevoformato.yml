@@ -1,55 +1,66 @@
 ################## catalogos ############################################33
 CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS TABLE(
-    tabla_name TEXT,
-    resultado JSONB
-) AS $$
+RETURNS SETOF JSONB AS $$
 BEGIN
-    -- Devolvemos los resultados de cada tabla con un nombre asociado
+    -- Devolver los resultados de las tablas en formato JSONB, cada uno como un JSON de una tabla
     RETURN QUERY
-    SELECT 'cis_alojamiento' AS tabla_name, jsonb_agg(row_to_json(t)) AS resultado
-    FROM cis_alojamiento t
-    UNION ALL
-    SELECT 'cis_desarrollo', jsonb_agg(row_to_json(t))
-    FROM cis_desarrollo t
-    UNION ALL
-    SELECT 'cis_entorno_ci', jsonb_agg(row_to_json(t))
-    FROM cis_entorno_ci t
-    UNION ALL
-    SELECT 'cis_lenguaje', jsonb_agg(row_to_json(t))
-    FROM cis_lenguaje t
-    UNION ALL
-    SELECT 'cis_nombre_aplicacion', jsonb_agg(row_to_json(t))
-    FROM cis_nombre_aplicacion t
-    UNION ALL
-    SELECT 'cis_pais_servidor', jsonb_agg(row_to_json(t))
-    FROM cis_pais_servidor t
-    UNION ALL
-    SELECT 'cis_proveedor', jsonb_agg(row_to_json(t))
-    FROM cis_proveedor t
-    UNION ALL
-    SELECT 'cis_responsable_aplicacion', jsonb_agg(row_to_json(t))
-    FROM cis_responsable_aplicacion t
-    UNION ALL
-    SELECT 'cis_tipo_servidor', jsonb_agg(row_to_json(t))
-    FROM cis_tipo_servidor t
-    UNION ALL
-    SELECT 'cis_esquema', jsonb_agg(row_to_json(t))
-    FROM cis_esquema t
-    UNION ALL
-    SELECT 'cis_estrategias_infra', jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_infra t
-    UNION ALL
-    SELECT 'cis_estrategias_datos', jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_datos t
-    UNION ALL
-    SELECT 'cis_tiempo_infra_servidor', jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_servidor t
-    UNION ALL
-    SELECT 'cis_tiempo_infra_aplicacion', jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_aplicacion t
-    UNION ALL
-    SELECT 'cis_joya', jsonb_agg(row_to_json(t))
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_alojamiento t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_desarrollo t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_entorno_ci t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_lenguaje t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_nombre_aplicacion t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_pais_servidor t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_proveedor t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_responsable_aplicacion t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_tipo_servidor t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_esquema t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_estrategias_infra t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_estrategias_datos t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_tiempo_infra_servidor t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
+    FROM cis_tiempo_infra_aplicacion t;
+
+    RETURN QUERY
+    SELECT jsonb_agg(row_to_json(t))
     FROM cis_joya t;
 END;
 $$ LANGUAGE plpgsql;
