@@ -74,6 +74,13 @@ Fin de la cadena:
 
 
 
+Inicio cadena:
+[[[{"ca_id": 21, "ca_tipo_alojamiento": "Pruebas A"}, {"ca_id": 22, "ca_tipo
+fin cadena:
+tiempo": "16-18hrs"}], [{"cj_id": 1, "cj_joya": "SI"}, {"cj_id": 2, "cj_joya": "NO"}]]]
+
+
+
 ##############################################################################################################################
 
 Add catalogo
