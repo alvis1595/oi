@@ -30,29 +30,29 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION obtener_catalogos()
 RETURNS JSONB AS $$
 DECLARE
-    resultado JSONB;
+    resultado JSONB := '[]'::jsonb; -- Inicializamos un array JSON vacío
 BEGIN
-    -- Unificamos los resultados de cada tabla en un array plano
-    resultado := jsonb_agg(jsonb_agg(row_to_json(cis_alojamiento)) || 
-                           jsonb_agg(row_to_json(cis_desarrollo)) || 
-                           jsonb_agg(row_to_json(cis_entorno_ci)) || 
-                           jsonb_agg(row_to_json(cis_lenguaje)) || 
-                           jsonb_agg(row_to_json(cis_nombre_aplicacion)) || 
-                           jsonb_agg(row_to_json(cis_pais_servidor)) || 
-                           jsonb_agg(row_to_json(cis_proveedor)) || 
-                           jsonb_agg(row_to_json(cis_responsable_aplicacion)) || 
-                           jsonb_agg(row_to_json(cis_tipo_servidor)) || 
-                           jsonb_agg(row_to_json(cis_esquema)) || 
-                           jsonb_agg(row_to_json(cis_estrategias_infra)) || 
-                           jsonb_agg(row_to_json(cis_estrategias_datos)) || 
-                           jsonb_agg(row_to_json(cis_tiempo_infra_servidor)) || 
-                           jsonb_agg(row_to_json(cis_tiempo_infra_aplicacion)) || 
-                           jsonb_agg(row_to_json(cis_joya)));
+    -- Agregamos los resultados de cada tabla a la variable 'resultado'
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t);
+    resultado := resultado || (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t);
 
+    -- Retornamos el array final que contiene los resultados de todas las tablas
     RETURN resultado;
 END;
 $$ LANGUAGE plpgsql;
-
 
 --------------------------------------------------------------------------------------------------------------
 
