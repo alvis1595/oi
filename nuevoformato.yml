@@ -2,7 +2,7 @@
 CREATE OR REPLACE FUNCTION obtener_catalogos()
 RETURNS SETOF JSONB AS $$
 BEGIN
-    -- Devolver los resultados de las tablas en formato JSONB, cada uno como un JSON de una tabla
+    -- Consultamos todas las tablas y las agregamos al conjunto de resultados
     RETURN QUERY
     SELECT jsonb_agg(row_to_json(t))
     FROM cis_alojamiento t;
@@ -84,8 +84,8 @@ def catalogos():
             cursor.execute("SELECT * FROM obtener_catalogos();")
             result = cursor.fetchall()
             
-            # Aquí agregamos el resultado a result2 como antes
-            result2.append(result)
+            # Se aseguran de que los resultados son listados en un arreglo
+            result2.extend(result)
 
             logging.info(json.dumps(result2))
         except Error as e:
@@ -96,6 +96,7 @@ def catalogos():
                 connection.close()
 
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
+
 
 
 Inicio
