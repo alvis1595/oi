@@ -1,70 +1,84 @@
 ################## catalogos ############################################33
 CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS TABLE(
-    tabla_name TEXT,
-    resultado JSONB
-) AS $$
-DECLARE
-    record RECORD;
+RETURNS SETOF RECORD AS $$
 BEGIN
-    -- Consultar todas las tablas y devolver los resultados en formato JSON
-    FOR record IN 
-        SELECT * FROM (
-            VALUES 
-                ('cis_alojamiento', (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t)),
-                ('cis_desarrollo', (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t)),
-                ('cis_entorno_ci', (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t)),
-                ('cis_lenguaje', (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t)),
-                ('cis_nombre_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t)),
-                ('cis_pais_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t)),
-                ('cis_proveedor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t)),
-                ('cis_responsable_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t)),
-                ('cis_tipo_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t)),
-                ('cis_esquema', (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t)),
-                ('cis_estrategias_infra', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t)),
-                ('cis_estrategias_datos', (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t)),
-                ('cis_tiempo_infra_servidor', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t)),
-                ('cis_tiempo_infra_aplicacion', (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t)),
-                ('cis_joya', (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t))
-        ) AS resultado(tabla_name, resultado)
-    LOOP
-        RETURN NEXT record;
-    END LOOP;
-    RETURN;
+    -- Devolvemos los resultados de cada tabla con un nombre asociado
+    RETURN QUERY
+    SELECT 'cis_alojamiento' AS tabla_name, jsonb_agg(row_to_json(t)) AS resultado
+    FROM cis_alojamiento t
+    UNION ALL
+    SELECT 'cis_desarrollo', jsonb_agg(row_to_json(t))
+    FROM cis_desarrollo t
+    UNION ALL
+    SELECT 'cis_entorno_ci', jsonb_agg(row_to_json(t))
+    FROM cis_entorno_ci t
+    UNION ALL
+    SELECT 'cis_lenguaje', jsonb_agg(row_to_json(t))
+    FROM cis_lenguaje t
+    UNION ALL
+    SELECT 'cis_nombre_aplicacion', jsonb_agg(row_to_json(t))
+    FROM cis_nombre_aplicacion t
+    UNION ALL
+    SELECT 'cis_pais_servidor', jsonb_agg(row_to_json(t))
+    FROM cis_pais_servidor t
+    UNION ALL
+    SELECT 'cis_proveedor', jsonb_agg(row_to_json(t))
+    FROM cis_proveedor t
+    UNION ALL
+    SELECT 'cis_responsable_aplicacion', jsonb_agg(row_to_json(t))
+    FROM cis_responsable_aplicacion t
+    UNION ALL
+    SELECT 'cis_tipo_servidor', jsonb_agg(row_to_json(t))
+    FROM cis_tipo_servidor t
+    UNION ALL
+    SELECT 'cis_esquema', jsonb_agg(row_to_json(t))
+    FROM cis_esquema t
+    UNION ALL
+    SELECT 'cis_estrategias_infra', jsonb_agg(row_to_json(t))
+    FROM cis_estrategias_infra t
+    UNION ALL
+    SELECT 'cis_estrategias_datos', jsonb_agg(row_to_json(t))
+    FROM cis_estrategias_datos t
+    UNION ALL
+    SELECT 'cis_tiempo_infra_servidor', jsonb_agg(row_to_json(t))
+    FROM cis_tiempo_infra_servidor t
+    UNION ALL
+    SELECT 'cis_tiempo_infra_aplicacion', jsonb_agg(row_to_json(t))
+    FROM cis_tiempo_infra_aplicacion t
+    UNION ALL
+    SELECT 'cis_joya', jsonb_agg(row_to_json(t))
+    FROM cis_joya t;
 END;
 $$ LANGUAGE plpgsql;
+
+
 @cmdb.route('/cmdb/catalog', methods=['GET'])
 @require_api_key
 def catalogos():
     if request.method == 'GET':
-        result2 = []
-        connection = None
-
         try:
-            # Abriendo la conexión a la base de datos
             connection = psycopg2.connect(user=db_User,
-                                          password=db_Pass,
-                                          host=db_Host,
-                                          port=db_Port,
-                                          database="cmdb_integracion")
+                                           password=db_Pass,
+                                           host=db_Host,
+                                           port=db_Port,
+                                           database="cmdb_integracion")
             cursor = connection.cursor(cursor_factory=RealDictCursor)
             
-            # Llamar a la función en PostgreSQL
-            cursor.execute("SELECT * FROM obtener_catalogos();")
-            result2 = cursor.fetchall()
-
-            logging.info("Consulta completada exitosamente")
-
-        except (Exception, psycopg2.Error) as e:
-            logging.error(f"[ERROR]: Algo ha salido mal: {str(e)}")
-            return json.dumps({"error": "Error al consultar la base de datos"}, ensure_ascii=False).encode('utf8'), 500
-
+            # Ejecutamos la función PostgreSQL que devuelve los resultados en formato JSONB
+            cursor.execute("SELECT * FROM obtener_catalogos() AS t(tabla_name TEXT, resultado JSONB);")
+            result = cursor.fetchall()
+            
+            logging.info(json.dumps(result))
+            
+        except Error as e:
+            logging.error(f"[ERROR]: Algo ha salido mal: {e.pgerror}")
         finally:
             if connection:
                 cursor.close()
                 connection.close()
+    
+    return json.dumps(result, ensure_ascii=False).encode('utf8')
 
-        return json.dumps(result2, ensure_ascii=False).encode('utf8')
 
 ##############################################################################################################################
 
