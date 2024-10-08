@@ -28,6 +28,75 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+
+CREATE OR REPLACE FUNCTION obtener_catalogos()
+RETURNS JSONB AS $$
+DECLARE
+    resultado JSONB := '[]'::JSONB;  -- Iniciar un arreglo vacío
+    fila JSONB;
+BEGIN
+    -- Ejecutar la consulta para cada tabla y agregar los resultados
+    -- Alojamiento
+    EXECUTE 'SELECT json_agg(t) FROM cis_alojamiento t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Desarrollo
+    EXECUTE 'SELECT json_agg(t) FROM cis_desarrollo t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Entorno CI
+    EXECUTE 'SELECT json_agg(t) FROM cis_entorno_ci t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Lenguaje
+    EXECUTE 'SELECT json_agg(t) FROM cis_lenguaje t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Nombre aplicación
+    EXECUTE 'SELECT json_agg(t) FROM cis_nombre_aplicacion t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Proveedor
+    EXECUTE 'SELECT json_agg(t) FROM cis_proveedor t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Responsable aplicación
+    EXECUTE 'SELECT json_agg(t) FROM cis_responsable_aplicacion t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Tipo servidor
+    EXECUTE 'SELECT json_agg(t) FROM cis_tipo_servidor t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Esquema
+    EXECUTE 'SELECT json_agg(t) FROM cis_esquema t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Estrategias infraestructura
+    EXECUTE 'SELECT json_agg(t) FROM cis_estrategias_infra t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Estrategias datos
+    EXECUTE 'SELECT json_agg(t) FROM cis_estrategias_datos t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Tiempo infraestructura servidor
+    EXECUTE 'SELECT json_agg(t) FROM cis_tiempo_infra_servidor t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Tiempo infraestructura aplicación
+    EXECUTE 'SELECT json_agg(t) FROM cis_tiempo_infra_aplicacion t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    -- Joya
+    EXECUTE 'SELECT json_agg(t) FROM cis_joya t' INTO fila;
+    resultado := resultado || COALESCE(fila, '[]'::jsonb);
+
+    RETURN resultado;
+END;
+$$ LANGUAGE plpgsql;
+
+
 @cmdb.route('/cmdb/catalog', methods=['GET'])
 @require_api_key
 def catalogos():
