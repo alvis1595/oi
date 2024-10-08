@@ -1,6 +1,9 @@
 ################## catalogos ############################################33
 CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS SETOF RECORD AS $$
+RETURNS TABLE(
+    tabla_name TEXT,
+    resultado JSONB
+) AS $$
 BEGIN
     -- Devolvemos los resultados de cada tabla con un nombre asociado
     RETURN QUERY
@@ -56,6 +59,8 @@ $$ LANGUAGE plpgsql;
 @require_api_key
 def catalogos():
     if request.method == 'GET':
+        result2 = []
+        connection = None
         try:
             connection = psycopg2.connect(user=db_User,
                                            password=db_Pass,
@@ -63,21 +68,24 @@ def catalogos():
                                            port=db_Port,
                                            database="cmdb_integracion")
             cursor = connection.cursor(cursor_factory=RealDictCursor)
-            
+
             # Ejecutamos la función PostgreSQL que devuelve los resultados en formato JSONB
-            cursor.execute("SELECT * FROM obtener_catalogos() AS t(tabla_name TEXT, resultado JSONB);")
+            cursor.execute("SELECT * FROM obtener_catalogos();")
             result = cursor.fetchall()
             
-            logging.info(json.dumps(result))
-            
+            # Aquí agregamos el resultado a result2 como antes
+            result2.append(result)
+
+            logging.info(json.dumps(result2))
         except Error as e:
             logging.error(f"[ERROR]: Algo ha salido mal: {e.pgerror}")
         finally:
             if connection:
                 cursor.close()
                 connection.close()
-    
-    return json.dumps(result, ensure_ascii=False).encode('utf8')
+
+    return json.dumps(result2, ensure_ascii=False).encode('utf8')
+
 
 
 ##############################################################################################################################
