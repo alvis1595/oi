@@ -252,3 +252,50 @@ def deleteCatalog():
         # Si no hubo error, responde con el resultado
         else:
             return jsonify({"result": "Se eliminó el registro correctamente!"})
+
+
+------------------------------------------------------------------------------------------------
+X Headers Preview Response Initiator
+Timing
+e: [ {tabla_name: "cis_alojamiento"
+{tabla_name: "cis_desarrollo" , {tabla_name: ,m}, ]
+{tabla_name: "cis_alojamiento"
+resultado: [{ca_id: 21, "Pruebas A"}, {ca_id: 22, "Pruebas BG"},
+resultado: [{cec_id: 1, cec_tipo: "Produccion"}, {cec_id: 2, cec_tipo:
+tabla_name: "cis_aloj amiento"
+{tabla_name: "cis_desarrollo"
+resultado: [{cd_id: 2, cd_desarrollo:
+tabla name: "cis desarrollo"
+{tabla_name: "cis_entorno ci
+tabla name: "cis entorno ci"
+{tabla_name: "cis_1enguaJe ,
+"Proveedor Comercial"}, {cd_id: 3, cd_desarrollo:
+"Contingencxa } ,
+resultado: [ {cl _ id: 2, cl_lenguaje: "ASP, Vbscrip, Javascript, DLL en lenjuage
+tabla name: "cis_lenguaje"
+{tabla_name:
+resultado: f {cna id: 1, cna joya: "SI",
+cna aplicacion:
+"Acceso Remoto al Negocio
+
+
+
+[[{ca_id: 21, ca_tipo_alojamiento: "Pruebas A"}, {ca_id: 22, ca_tipo_alojamiento: "Pruebas BG"},…],…]
+0
+: 
+[{ca_id: 21, ca_tipo_alojamiento: "Pruebas A"}, {ca_id: 22, ca_tipo_alojamiento: "Pruebas BG"},…]
+1
+: 
+[{cd_id: 2, cd_desarrollo: "Proveedor Comercial"}, {cd_id: 3, cd_desarrollo: "Tercerizado"},…]
+2
+: 
+[{cec_id: 1, cec_tipo: "Produccion"}, {cec_id: 2, cec_tipo: "Contingencia"},…]
+3
+: 
+[{cl_id: 2, cl_lenguaje: "ASP, Vbscrip, Javascript, DLL en lenjuage C"},…]
+4
+: 
+[{cna_id: 1, cna_aplicacion: "Acceso Remoto al Negocio (Citrix)", cna_joya: "SI"},…]
+5
+: 
+[{cps_id: 1, cps_servidor: "Panamá"}, {cps_id: 2, cps_servidor: "Costa Rica"},…]
