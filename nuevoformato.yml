@@ -1,53 +1,29 @@
 ################## catalogos ############################################33
 CREATE OR REPLACE FUNCTION obtener_catalogos()
-RETURNS SETOF JSONB AS $$
+RETURNS JSONB AS $$
+DECLARE
+    resultado JSONB;
 BEGIN
-    -- Unificamos todos los resultados en una única consulta
-    RETURN QUERY
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_alojamiento t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_desarrollo t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_entorno_ci t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_lenguaje t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_nombre_aplicacion t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_pais_servidor t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_proveedor t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_responsable_aplicacion t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tipo_servidor t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_esquema t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_infra t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_datos t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_servidor t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_aplicacion t
-    UNION ALL
-    SELECT jsonb_agg(row_to_json(t))
-    FROM cis_joya t;
+    -- Unificamos todos los resultados en una única consulta y combinamos los JSON en un array
+    resultado := jsonb_agg(jsonb_build_array(
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_alojamiento t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_desarrollo t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_entorno_ci t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_lenguaje t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_nombre_aplicacion t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_pais_servidor t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_proveedor t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_responsable_aplicacion t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_tipo_servidor t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_esquema t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_infra t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_estrategias_datos t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_servidor t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_tiempo_infra_aplicacion t),
+        (SELECT jsonb_agg(row_to_json(t)) FROM cis_joya t)
+    ));
+    
+    RETURN resultado;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -66,12 +42,12 @@ def catalogos():
                                            database="cmdb_integracion")
             cursor = connection.cursor(cursor_factory=RealDictCursor)
 
-            # Ejecutamos la función PostgreSQL que devuelve los resultados en formato JSONB
-            cursor.execute("SELECT * FROM obtener_catalogos();")
-            result = cursor.fetchall()
+            # Ejecutamos la función que devuelve el array de JSON
+            cursor.execute("SELECT obtener_catalogos();")
+            result = cursor.fetchone()
             
-            # Se aseguran de que los resultados son listados en un arreglo
-            result2.extend(result)
+            # Aseguramos que result sea procesado correctamente en formato JSON
+            result2 = result['obtener_catalogos']
 
             logging.info(json.dumps(result2))
         except Error as e:
@@ -82,6 +58,7 @@ def catalogos():
                 connection.close()
 
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
+
 
 
 Inicio
