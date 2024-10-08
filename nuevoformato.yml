@@ -11,7 +11,6 @@ DECLARE
         'cis_joya'
     ];
     resultado JSONB := '[]'::JSONB;  -- Iniciar un arreglo vacío
-    consulta TEXT;
     fila JSONB;
 BEGIN
     -- Iterar sobre cada tabla en el array de tablas
@@ -20,13 +19,14 @@ BEGIN
         EXECUTE format('SELECT json_agg(t) FROM %I t', consulta)
         INTO fila;
         
-        -- Agregar el resultado de cada tabla como un array dentro del JSON final
-        resultado := resultado || jsonb_build_array(COALESCE(fila, '[]'::jsonb));
+        -- Asegurarse de que fila no sea nula y agregarla a la lista de resultados
+        resultado := resultado || COALESCE(fila, '[]'::jsonb);
     END LOOP;
 
     RETURN resultado;
 END;
 $$ LANGUAGE plpgsql;
+
 
 @cmdb.route('/cmdb/catalog', methods=['GET'])
 @require_api_key
@@ -45,9 +45,10 @@ def catalogos():
             
             # Ejecutar la función de PostgreSQL
             cursor.execute("SELECT obtener_catalogos();")
-            result = cursor.fetchone()[0]  # Obtener el resultado en formato JSON (lista de listas)
+            result = cursor.fetchone()[0]  # Obtener el resultado en formato JSON
             
-            result2 = result  # Asignar el resultado directamente
+            # El resultado ya está en la forma de una lista de listas, asignarlo directamente
+            result2 = result  
             
             logging.info(json.dumps(result2))
         except Error as e:
@@ -57,7 +58,9 @@ def catalogos():
                 cursor.close()
                 connection.close()
                 
+    # Devolver el JSON correctamente al frontend
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
+
 
 ##############################################################################################################################
 
