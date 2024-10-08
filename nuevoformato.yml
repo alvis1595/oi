@@ -2,64 +2,50 @@
 CREATE OR REPLACE FUNCTION obtener_catalogos()
 RETURNS SETOF JSONB AS $$
 BEGIN
-    -- Consultamos todas las tablas y las agregamos al conjunto de resultados
+    -- Unificamos todos los resultados en una única consulta
     RETURN QUERY
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_alojamiento t;
-
-    RETURN QUERY
+    FROM cis_alojamiento t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_desarrollo t;
-
-    RETURN QUERY
+    FROM cis_desarrollo t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_entorno_ci t;
-
-    RETURN QUERY
+    FROM cis_entorno_ci t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_lenguaje t;
-
-    RETURN QUERY
+    FROM cis_lenguaje t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_nombre_aplicacion t;
-
-    RETURN QUERY
+    FROM cis_nombre_aplicacion t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_pais_servidor t;
-
-    RETURN QUERY
+    FROM cis_pais_servidor t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_proveedor t;
-
-    RETURN QUERY
+    FROM cis_proveedor t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_responsable_aplicacion t;
-
-    RETURN QUERY
+    FROM cis_responsable_aplicacion t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tipo_servidor t;
-
-    RETURN QUERY
+    FROM cis_tipo_servidor t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_esquema t;
-
-    RETURN QUERY
+    FROM cis_esquema t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_infra t;
-
-    RETURN QUERY
+    FROM cis_estrategias_infra t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_estrategias_datos t;
-
-    RETURN QUERY
+    FROM cis_estrategias_datos t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_servidor t;
-
-    RETURN QUERY
+    FROM cis_tiempo_infra_servidor t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
-    FROM cis_tiempo_infra_aplicacion t;
-
-    RETURN QUERY
+    FROM cis_tiempo_infra_aplicacion t
+    UNION ALL
     SELECT jsonb_agg(row_to_json(t))
     FROM cis_joya t;
 END;
@@ -96,7 +82,6 @@ def catalogos():
                 connection.close()
 
     return json.dumps(result2, ensure_ascii=False).encode('utf8')
-
 
 
 Inicio
