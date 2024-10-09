@@ -379,12 +379,13 @@ BEGIN
         RETURN 'ERROR: El dato ya existe en el catalogo.';
     END IF;
 
-    -- Actualizar el valor en la tabla
-    EXECUTE format('UPDATE %I SET %I = $1 WHERE %I = $2', catalog, c_data, c_id) USING p_value, p_id;
+    -- Convertir el id de texto a entero y actualizar el valor en la tabla
+    EXECUTE format('UPDATE %I SET %I = $1 WHERE %I = $2::integer', catalog, c_data, c_id) USING p_value, p_id;
 
     RETURN 'Se edito el registro correctamente!';
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 @app.route('/cmdb/edit_catalog', methods=['POST'])
