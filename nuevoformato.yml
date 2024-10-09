@@ -505,4 +505,50 @@ en los mensajes del api veo esto:
 UnboundLocalError: cannot access local variable 'result' where it is not associated with a value
 127.0.0.1 - - [09/Oct/2024 14:15:57] "OPTIONS /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
 
+@cmdb.route('/cmdb/edit_catalog', methods=['POST'])
+@require_api_key
+def editCatalog():
+    if request.method == 'POST':
+        errorcode = 0
+        errormsg = ""
+        connection = None
+        result = ["No result"]  # Inicializar 'result' con un valor por defecto
+        
+        # Capturar los parámetros del formulario
+        catalogo = request.form.get('cat').replace('"','') 
+        id = request.form.get('id').replace('"','') 
+        value = request.form.get('value').replace('"','') 
+        
+        try:
+            # Establecer la conexión con la base de datos
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+
+            # Llamar a la función de PostgreSQL
+            cursor.execute("SELECT edit_catalog(%s, %s, %s)", (catalogo, id, value))
+            result = cursor.fetchone()  # Obtener el mensaje de resultado de la función
+
+            # Si la función devuelve un mensaje de error
+            if result[0].startswith("ERROR"):
+                errorcode = 1
+                raise Exception(result[0])
+
+            connection.commit()
+
+        except Exception as e:
+            errormsg = jsonify(f"[ERROR]: {str(e)}")
+            logging.error(f"[ERROR]: Algo ha salido mal: {str(e)}")
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
+    if errorcode != 0:
+        return errormsg
+    else: 
+        return jsonify(result[0])  # Devolver el mensaje que retorne la función de PostgreSQL
 
