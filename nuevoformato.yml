@@ -326,3 +326,102 @@ cna aplicacion:
 5
 : 
 [{cps_id: 1, cps_servidor: "Panamá"}, {cps_id: 2, cps_servidor: "Costa Rica"},…]
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION edit_catalog(
+    p_catalogo TEXT,
+    p_id TEXT,
+    p_value TEXT
+)
+RETURNS TEXT AS $$
+DECLARE
+    catalog TEXT;
+    c_id TEXT;
+    c_data TEXT;
+    exists_value TEXT;
+    catalogos TEXT[] := ARRAY[
+        'Alojamiento', 'Desarrollo', 'Entorno', 'Lenguaje', 'Aplicacion', 'Pais', 'Proveedor', 'Responsable', 
+        'Tipo Servidor', 'Esquema de Continuidad', 'Estrategias de Recuperación Infra', 
+        'Estrategias de Recuperación Datos', 'Tiempo de Instalación (Servidor)', 
+        'Tiempo de Instalación (Aplicación)', 'Joya de la Corona'
+    ];
+    tables TEXT[] := ARRAY[
+        'cis_alojamiento', 'cis_desarrollo', 'cis_entorno_ci', 'cis_lenguaje', 'cis_nombre_aplicacion', 
+        'cis_pais_servidor', 'cis_proveedor', 'cis_responsable_aplicacion', 'cis_tipo_servidor', 
+        'cis_esquema', 'cis_estrategias_infra', 'cis_estrategias_datos', 'cis_tiempo_infra_servidor', 
+        'cis_tiempo_infra_aplicacion', 'cis_joya'
+    ];
+    col_id TEXT[] := ARRAY[
+        'ca_id', 'cd_id', 'cec_id', 'cl_id', 'cna_id', 'cps_id', 'cp_id', 'cra_id', 'cts_id', 'ce_id', 
+        'cei_id', 'ced_id', 'ctis_id', 'ctia_id', 'cj_id'
+    ];
+    col_data TEXT[] := ARRAY[
+        'ca_tipo_alojamiento', 'cd_desarrollo', 'cec_tipo', 'cl_lenguaje', 'cna_aplicacion', 'cps_servidor', 
+        'cp_proveedor', 'cra_mesa', 'cts_tipo_servidor', 'ce_esquema', 'cei_estrategias', 'ced_estrategias', 
+        'ctis_tiempo', 'ctia_tiempo', 'cj_joya'
+    ];
+    i INT;
+BEGIN
+    -- Buscar el índice del catálogo correspondiente
+    FOR i IN 1..array_length(catalogos, 1) LOOP
+        IF catalogos[i] = p_catalogo THEN
+            catalog := tables[i];
+            c_id := col_id[i];
+            c_data := col_data[i];
+            EXIT;
+        END IF;
+    END LOOP;
+
+    -- Verificar si el valor ya existe en la tabla
+    EXECUTE format('SELECT %I FROM %I WHERE %I = $1', c_data, catalog, c_data) INTO exists_value USING p_value;
+    IF exists_value IS NOT NULL THEN
+        RETURN 'ERROR: El dato ya existe en el catalogo.';
+    END IF;
+
+    -- Actualizar el valor en la tabla
+    EXECUTE format('UPDATE %I SET %I = $1 WHERE %I = $2', catalog, c_data, c_id) USING p_value, p_id;
+
+    RETURN 'Se edito el registro correctamente!';
+END;
+$$ LANGUAGE plpgsql;
+
+
+@app.route('/cmdb/edit_catalog', methods=['POST'])
+def editCatalog():
+    if request.method == 'POST':
+        try:
+            # Obtener los datos del formulario
+            catalogo = request.form.get('cat').replace('"', '')
+            id = request.form.get('id').replace('"', '')
+            value = request.form.get('value').replace('"', '')
+
+            # Conectar a la base de datos
+            connection = psycopg2.connect(
+                user=db_User,
+                password=db_Pass,
+                host=db_Host,
+                port=db_Port,
+                database=db_Name
+            )
+            cursor = connection.cursor()
+
+            # Llamar a la función de PostgreSQL para editar el catálogo
+            cursor.execute("SELECT edit_catalog(%s, %s, %s)", (catalogo, id, value))
+            result = cursor.fetchone()  # Obtener el resultado de la función
+
+            # Verificar el mensaje de la función
+            if result:
+                message = result[0]  # El mensaje que retorna la función
+
+        except Exception as e:
+            logging.error(f"[ERROR]: Algo ha salido mal: {str(e)}")
+            message = jsonify({"error": "Algo ha salido mal al intentar editar el catálogo."})
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
+        return jsonify({"message": message})
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
