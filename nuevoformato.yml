@@ -489,4 +489,20 @@ def editCatalog():
         return jsonify(result[0])  # Devolver el mensaje que retorne la función de PostgreSQL
 
 
+en los mensajes del api veo esto:
+  File "C:\Users\alvsanchez\Documents\ipd-argos-api\cmdb\.env\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\alvsanchez\Documents\ipd-argos-api\cmdb\.env\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\alvsanchez\Documents\ipd-argos-api\cmdb\app\routes\utils.py", line 249, in check_api_key
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\alvsanchez\Documents\ipd-argos-api\cmdb\app\routes\cmdb.py", line 863, in editCatalog
+    return jsonify(result[0])  # Devolver el mensaje que retorne la funci▒n de PostgreSQL
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'result' where it is not associated with a value
+127.0.0.1 - - [09/Oct/2024 14:15:57] "OPTIONS /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
+
 
