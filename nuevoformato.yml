@@ -552,3 +552,20 @@ def editCatalog():
     else: 
         return jsonify(result[0])  # Devolver el mensaje que retorne la función de PostgreSQL
 
+
+ id: 26
+value: Dos ansible
+cat: undefined
+joya: NO
+INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 14:30:19] "OPTIONS /argoapiv2/cmdb/edit_catalog HTTP/1.1" 200 -
+ERROR:root:[ERROR]: Algo ha salido mal: null values cannot be formatted as an SQL identifier
+CONTEXT:  PL/pgSQL function edit_catalog(text,text,text) line 41 at EXECUTE
+
+127.0.0.1 - - [09/Oct/2024 14:30:29] "POST /argoapiv2/cmdb/edit_catalog HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 14:30:29] "POST /argoapiv2/cmdb/edit_catalog HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2024 14:30:29] "OPTIONS /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 14:30:29] "OPTIONS /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2024 14:31:28] "GET /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [09/Oct/2024 14:31:28] "GET /argoapiv2/cmdb/catalog HTTP/1.1" 200 -
+
+
