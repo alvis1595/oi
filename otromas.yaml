@@ -276,4 +276,62 @@ def delete_record():
         return (errormsg)
     else:
         return jsonify("Se elimino el registro!")
+
+
+
+
+    import logging
+from flask import jsonify, request
+
+@cmdb.route('/cmdb/delete', methods=['POST'])
+@require_api_key
+def delete_record():
+    try:
+        errorcode = 0
+        errormsg = ""
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')  # Capturando el creador, aunque no se usa en la eliminación
+        cr_id = data['cr_id']
+        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
+
+        # Usar la función eliminar_registro para eliminar el registro
+        sql = f"SELECT eliminar_registro({cr_id});"  # Llamando a la función directamente
+
+        connection = psycopg2.connect(user=db_User,
+                                       password=db_Pass,
+                                       host=db_Host,
+                                       port=db_Port,
+                                       database="cmdb_integracion")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+        # Verificar grupos de usuario
+        var = False
+        for group in user_groups:
+            if 'ipd-engineers' in group:
+                print('parte del grupo')
+                var = True
+                break
+        if not var:
+            errorcode = 1
+            raise Exception("No tiene permisos para eliminar registros.")
+
+        cursor.execute(sql)
+        connection.commit()
+
+    except (Exception, Error) as e:
+        if errorcode == 1:
+            errormsg = jsonify("ERROR: No tiene permisos para eliminar registros!")
+            logging.error(f"[ERROR]: {str(e)}")  # Registrar el error
+        else:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar el registro: {str(e)}")  # Registrar el error
+    finally:
+        if 'cursor' in locals():  # Verificar si el cursor existe
+            cursor.close()
+        if 'connection' in locals():  # Verificar si la conexión existe
+            connection.close()
+    if errorcode != 0:
+        return errormsg
+    else:
+        return jsonify("Se eliminó el registro!")
+
         
