@@ -228,3 +228,62 @@ def delete_record():
         return errormsg
     else:
         return jsonify("Se eliminó el registro correctamente!")
+
+
+
+
+
+
+
+
+
+
+
+
+@cmdb.route('/cmdb/delete', methods=['POST'])
+@require_api_key
+def delete_record():
+    try:
+        errorcode = 0
+        errormsg = ""
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')
+        cr_id = data['cr_id']
+        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
+        sql = f"""
+                DELETE FROM cis_registros WHERE cr_id = '{cr_id}'
+                """
+        connection = psycopg2.connect(user=db_User,
+                                      password=db_Pass,
+                                      host=db_Host,
+                                      port=db_Port,
+                                      database="cmdb_integracion")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+        var = False
+        for group in user_groups:
+            if 'ipd-engineers' in group:
+                print('parte del grupo')
+                var = True
+                break
+        if var == False:
+            errorcode = 1
+            raise Exception
+        cursor.execute(sql)
+        connection.commit()
+    except (Exception, Error):
+        if errorcode == 1:
+            errormsg = jsonify(
+                "ERROR: No tiene permisos para eliminar registros!")
+            print("ERROR: 1")
+        else:
+            logging.error(
+                f"[ERROR]: Algo ha salido mal al intentar eliminar el registro.")
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+    if errorcode != 0:
+        return (errormsg)
+    else:
+        return jsonify("Se elimino el registro!")
+        
