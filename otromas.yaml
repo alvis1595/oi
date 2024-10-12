@@ -136,7 +136,8 @@ def edit_record():
 CREATE OR REPLACE FUNCTION eliminar_registro(cr_id VARCHAR, creador VARCHAR)
 RETURNS TEXT AS $$
 DECLARE
-    user_groups TEXT[];
+    user_groups TEXT[]; -- Aquí almacenamos los grupos del creador
+    group_name TEXT; -- Esta es la variable para iterar en el FOREACH
     has_permission BOOLEAN := FALSE;
 BEGIN
     -- Simulación de la lógica de 'ldap_login' para obtener grupos del creador
@@ -169,6 +170,7 @@ EXCEPTION
         RETURN 'ERROR: Algo ha salido mal al intentar eliminar el registro.';
 END;
 $$ LANGUAGE plpgsql;
+
 
 
 @cmdb.route('/cmdb/delete', methods=['POST'])
