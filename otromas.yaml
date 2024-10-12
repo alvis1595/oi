@@ -132,3 +132,67 @@ def edit_record():
     else:
         return jsonify("Se editó el registro correctamente!")
 
+-----------------------------------------------------------------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION eliminar_registro(cr_id_input TEXT, creador_input TEXT)
+RETURNS VOID AS $$
+BEGIN
+    -- Verifica si el creador tiene permisos
+    IF NOT EXISTS (SELECT 1 FROM user_groups WHERE creador = creador_input AND group_name LIKE '%ccyl%') THEN
+        RAISE EXCEPTION 'No tiene permisos para eliminar registros!';
+    END IF;
+
+    -- Elimina el registro
+    DELETE FROM cis_registros WHERE cr_id = cr_id_input;
+
+END;
+$$ LANGUAGE plpgsql;
+
+
+@cmdb.route('/cmdb/delete', methods=['POST'])
+@require_api_key
+def delete_record():
+    try:
+        errorcode = 0
+        errormsg = ""
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')
+        cr_id = data['cr_id']
+        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
+
+        # Conexión a la base de datos
+        connection = psycopg2.connect(user=db_User,
+                                      password=db_Pass,
+                                      host=db_Host,
+                                      port=db_Port,
+                                      database="cmdb_integracion")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+        # Verificar permisos
+        var = False
+        for group in user_groups:
+            if 'ccyl' in group:
+                var = True
+                break
+        if var == False:
+            errorcode = 1
+            raise Exception
+
+        # Llamada a la función de PostgreSQL
+        cursor.callproc('eliminar_registro', (cr_id, creador))
+        connection.commit()
+
+    except (Exception, Error):
+        if errorcode == 1:
+            errormsg = jsonify("ERROR: No tiene permisos para eliminar registros!")
+            print("ERROR: 1")
+        else:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar eliminar el registro.")
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+    if errorcode != 0:
+        return (errormsg)
+    else:
+        return jsonify("Se eliminó el registro correctamente!")
