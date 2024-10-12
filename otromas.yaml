@@ -1,0 +1,134 @@
+CREATE OR REPLACE FUNCTION actualizar_registro(
+    cr_id INT,
+    servidor TEXT,
+    ip TEXT,
+    tipo_servidor TEXT,
+    entorno_ci TEXT,
+    pais TEXT,
+    aplicacion TEXT,
+    lenguaje TEXT,
+    proveedor TEXT,
+    desarrollo TEXT,
+    responsable TEXT,
+    rep TEXT,
+    alojamiento TEXT,
+    esquema_de_continuidad TEXT,
+    estrategias_de_recuperacion_infra TEXT,
+    estrategias_de_recuperacion_datos TEXT,
+    tiempo_de_instalacion_servidor TEXT,
+    tiempo_de_instalacion_aplicacion TEXT,
+    joya_de_la_corona TEXT
+)
+RETURNS VOID AS $$
+BEGIN
+    -- Aquí va la lógica para actualizar la tabla en SQL.
+    UPDATE cis_registros
+    SET cr_servidor = servidor,
+        cr_direccion_ip = ip,
+        cr_tipo_servidor = tipo_servidor,
+        cr_entorno_ci = entorno_ci,
+        cr_pais = pais,
+        cr_aplicacion = aplicacion,
+        cr_lenguaje = lenguaje,
+        cr_proveedor = proveedor,
+        cr_desarrollo = desarrollo,
+        cr_mesa_responsable = responsable,
+        cr_rep = rep,
+        cr_alojamiento = alojamiento,
+        cr_esquema_de_continuidad = esquema_de_continuidad,
+        cr_estrategias_de_recuperacion_infra = estrategias_de_recuperacion_infra,
+        cr_estrategias_de_recuperacion_datos = estrategias_de_recuperacion_datos,
+        cr_tiempo_de_instalacion_servidor = tiempo_de_instalacion_servidor,
+        cr_tiempo_de_instalacion_aplicacion = tiempo_de_instalacion_aplicacion,
+        cr_joya_de_la_corona = joya_de_la_corona
+    WHERE cr_id = cr_id;
+END;
+$$ LANGUAGE plpgsql;
+-------------------------------------------------------------------------------------------------------------------------------------
+
+@cmdb.route('/cmdb/edit', methods=['POST'])
+@require_api_key
+def edit_record():
+    try:
+        errorcode = 0
+        errormsg = ""
+        data = request.get_json()
+        creador = data['creador'].replace('"', '')
+        cr_id = data['cr_id']
+        servidor = data['servidor']
+        ip = data['ip']
+        tipo_servidor = data['tipo_servidor']
+        entorno_ci = data['entorno_ci']
+        pais = data['pais']
+        aplicacion = data['aplicacion']
+        lenguaje = data['lenguaje']
+        proveedor = data['proveedor']
+        desarrollo = data['desarrollo']
+        responsable = data['responsable']
+        rep = data['rep']
+        alojamiento = data['alojamiento']
+        esquema_de_continuidad = data['esquema_de_continuidad']
+        estrategias_de_recuperacion_infra = data['estrategias_de_recuperacion_infra']
+        estrategias_de_recuperacion_datos = data['estrategias_de_recuperacion_datos']
+        tiempo_de_instalacion_servidor = data['tiempo_de_instalacion_servidor']
+        tiempo_de_instalacion_aplicacion = data['tiempo_de_instalacion_aplicacion']
+        joya_de_la_corona = data['joya_de_la_corona']
+
+        # Autenticación de usuario
+        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
+
+        connection = psycopg2.connect(user=db_User,
+                                      password=db_Pass,
+                                      host=db_Host,
+                                      port=db_Port,
+                                      database="cmdb_integracion")
+        cursor = connection.cursor(cursor_factory=RealDictCursor)
+
+        # Validar usuario que edita
+        cursor.execute(f"SELECT cr_creador FROM cis_registros WHERE cr_id = {cr_id}")
+        result = cursor.fetchone()
+
+        # Verificación de grupo
+        var = False
+        for group in user_groups:
+            if 'ccyl' in group:
+                var = True
+                break
+        
+        if var == False:
+            if creador not in result.values():
+                errorcode = 1
+                raise Exception
+
+        # Llamar a la función de PostgreSQL para actualizar el registro
+        cursor.execute("""
+            SELECT actualizar_registro(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+            cr_id, data['servidor'], data['ip'], data['tipo_servidor'], data['entorno_ci'],
+            data['pais'], data['aplicacion'], data['lenguaje'], data['proveedor'],
+            data['desarrollo'], data['responsable'], data['rep'], data['alojamiento'],
+            data['esquema_de_continuidad'], data['estrategias_de_recuperacion_infra'],
+            data['estrategias_de_recuperacion_datos'], data['tiempo_de_instalacion_servidor'],
+            data['tiempo_de_instalacion_aplicacion'], data['joya_de_la_corona']
+        ))
+
+        # Obtener el resultado de la función
+        result = cursor.fetchone()
+        if not result[0]:  # Si la función devolvió False
+            raise Exception("Error al actualizar el registro")
+
+    except (Exception, Error):
+        if errorcode == 1:
+            errormsg = jsonify("ERROR: No puede modificar este registro!")
+        else:
+            errormsg = jsonify("ERROR: Algo ha salido mal al intentar guardar.")
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+    if errorcode != 0:
+        return errormsg
+    else:
+        return jsonify("Se editó el registro correctamente!")
+
