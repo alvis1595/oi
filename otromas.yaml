@@ -217,3 +217,19 @@ def delete_record():
         return (errormsg)
     else:
         return jsonify("Se eliminó el registro correctamente!")
+
+
+
+
+
+
+
+
+127.0.0.1 - - [12/Oct/2024 01:31:42] "OPTIONS /argoapiv2/cmdb/delete HTTP/1.1" 200 -
+ERROR:root:[ERROR]: Algo ha salido mal al intentar eliminar el registro. function eliminar_registro(integer, unknown) does not exist
+LINE 1: SELECT eliminar_registro(9904, 'alvsanchez');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+127.0.0.1 - - [12/Oct/2024 01:31:52] "POST /argoapiv2/cmdb/delete HTTP/1.1" 200 -
+
