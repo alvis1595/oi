@@ -498,3 +498,10 @@ SELECT actualizar_cis_registro(
     true                         -- joya_de_la_corona
 );
 SELECT * FROM cis_registros WHERE cr_id = 1;
+
+127.0.0.1 - - [13/Oct/2024 02:07:12] "OPTIONS /argoapiv2/cmdb/edit HTTP/1.1" 200 -
+ERROR:root:[ERROR]: Algo ha salido mal al intentar guardar: function actualizar_registro(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown) does not exist
+LINE 1: SELECT actualizar_registro('9901', 'Duster223', '192.168.1.1...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
