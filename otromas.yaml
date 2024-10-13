@@ -86,6 +86,17 @@ def edit_record():
 
         # Validar usuario que edita
         cursor.execute(f"SELECT cr_creador FROM cis_registros WHERE cr_id = {cr_id}")
+
+        sql = """
+        SELECT actualizar_cis_registro(
+        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        params = (
+        cr_id, servidor, ip, tipo_servidor, entorno_ci, pais, aplicacion, lenguaje, 
+        proveedor, desarrollo, responsable, rep, alojamiento, esquema_de_continuidad, 
+        estrategias_de_recuperacion_infra, estrategias_de_recuperacion_datos, 
+        tiempo_de_instalacion_servidor, tiempo_de_instalacion_aplicacion, joya_de_la_corona
+        )
         result = cursor.fetchone()
 
         # Verificación de grupo
@@ -391,6 +402,8 @@ def edit_record():
         errorcode = 0
         errormsg = ""
         data = request.get_json()
+        
+        # Capturar los datos del request
         creador = data['creador'].replace('"', '')
         cr_id = data['cr_id']
         servidor = data['servidor']
@@ -411,44 +424,51 @@ def edit_record():
         tiempo_de_instalacion_servidor = data['tiempo_de_instalacion_servidor']
         tiempo_de_instalacion_aplicacion = data['tiempo_de_instalacion_aplicacion']
         joya_de_la_corona = data['joya_de_la_corona']
-        user_groups = ldap_login(creador, data['upwd'].replace('"',''))
+        
+        # Iniciar sesión y obtener grupos de usuario
+        user_groups = ldap_login(creador, data['upwd'].replace('"', ''))
 
+        # Conexión a la base de datos
         connection = psycopg2.connect(user=db_User,
-                                      password=db_Pass,
-                                      host=db_Host,
-                                      port=db_Port,
-                                      database="cmdb_integracion")
+                                       password=db_Pass,
+                                       host=db_Host,
+                                       port=db_Port,
+                                       database="cmdb_integracion")
         cursor = connection.cursor(cursor_factory=RealDictCursor)
-        # Validar usuario que edita
-        cursor.execute(f"SELECT cr_creador FROM cis_registros WHERE cr_id = {cr_id}")
-        result = cursor.fetchone()
+
+        # Verificar permisos del usuario
         var = False
         for group in user_groups:
             if 'ipd-engineers' in group:
+                print('parte del grupo')
                 var = True
                 break
-        if not var and creador not in result.values():
-            errorcode = 1
-            raise Exception
+        if not var:
+            # Validar si el creador puede editar el registro
+            cursor.execute(f"SELECT cr_creador FROM cis_registros WHERE cr_id = {cr_id};")
+            result = cursor.fetchone()
+            if not result or creador not in result.values():
+                errorcode = 1
+                raise Exception("ERROR: No puede modificar este registro!")
 
-        # Llamar a la función almacenada en PostgreSQL
-        cursor.callproc('actualizar_cis_registro', [
-            cr_id, servidor, ip, tipo_servidor, entorno_ci, pais, aplicacion, lenguaje,
-            proveedor, desarrollo, responsable, rep, alojamiento, esquema_de_continuidad,
-            estrategias_de_recuperacion_infra, estrategias_de_recuperacion_datos,
-            tiempo_de_instalacion_servidor, tiempo_de_instalacion_aplicacion, joya_de_la_corona
-        ])
+        # Usar la función actualizar_registro para editar el registro
+        sql = f"SELECT actualizar_registro('{cr_id}', '{servidor}', '{ip}', '{tipo_servidor}', '{entorno_ci}', '{pais}', '{aplicacion}', '{lenguaje}', '{proveedor}', '{desarrollo}', '{responsable}', '{rep}', '{alojamiento}', '{esquema_de_continuidad}', '{estrategias_de_recuperacion_infra}', '{estrategias_de_recuperacion_datos}', '{tiempo_de_instalacion_servidor}', '{tiempo_de_instalacion_aplicacion}', '{joya_de_la_corona}');"
+
+        cursor.execute(sql)
         connection.commit()
 
-    except (Exception, Error):
+    except (Exception, Error) as e:
         if errorcode == 1:
             errormsg = jsonify("ERROR: No puede modificar este registro!")
+            logging.error(f"[ERROR]: {str(e)}")  # Registrar el error
         else:
-            logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar.")
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar: {str(e)}")  # Registrar el error
     finally:
-        if connection:
+        if 'cursor' in locals():  # Verificar si el cursor existe
             cursor.close()
+        if 'connection' in locals():  # Verificar si la conexión existe
             connection.close()
+    
     if errorcode != 0:
         return errormsg
     else:
