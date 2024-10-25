@@ -229,3 +229,55 @@ def delete_record():
         return jsonify("Se eliminó el registro!")
 
 
+
+
+
+@cmdb.route('/cmdb/add_catalog', methods=['POST'])
+@require_api_key
+def addCatalog():
+    if request.method == 'POST':
+        errorcode = 0
+        errormsg = ""
+        result = None
+        connection = None
+
+        # Obtiene datos de la web
+        value = request.form.get('value').replace('"', '') 
+        catalogo = request.form.get('tabValue').replace('"', '') 
+
+        try:
+            # Prueba conexión
+            connection = psycopg2.connect(user=db_User,
+                                          password=db_Pass,
+                                          host=db_Host,
+                                          port=db_Port,
+                                          database="cmdb_integracion")
+            cursor = connection.cursor()
+
+            # Llama a la función SQL
+            cursor.execute("SELECT add_catalog_item(%s, %s)", (catalogo, value))
+            result = cursor.fetchone()[0]  # Captura resultado de SQL
+
+            connection.commit()
+
+        except psycopg2.DatabaseError as e:
+            logging.error(f"[ERROR]: Algo ha salido mal al intentar guardar: {e.pgerror}")
+            errorcode = 1
+            errormsg = "ERROR: El dato ya existe en el catálogo."  # Mensaje de error
+
+        except Exception as e:
+            logging.error(f"[ERROR]: Algo inesperado ocurrió: {str(e)}")
+            errorcode = 1
+            errormsg = "ERROR: Algo ha salido mal al intentar guardar."
+
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+
+        # Devuelve el resultado en el formato esperado
+        if errorcode != 0:
+            return jsonify(errormsg)  # Retorna el mensaje de error
+        else: 
+            return jsonify("Se agregó el registro correctamente!")  # Mensaje de éxito 
+
