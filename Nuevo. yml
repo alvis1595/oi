@@ -1,0 +1,42 @@
+---
+- name: Crear carpetas y volúmenes en Podman usando bind mount
+  hosts: localhost
+  become: yes
+  vars:
+    podman_volumes:
+      - name: asemon-dba
+        path: /var/containers/volasemon/asemondb/dba
+      - name: asemon-sybase
+        path: /var/containers/volasemon/asemondb/sybase
+
+  tasks:
+    - name: Crear carpetas en el sistema anfitrión
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: "{{ podman_volumes }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Crear volúmenes con opciones personalizadas usando comando
+      command: >
+        podman volume create
+        --opt type=none
+        --opt device={{ item.path }}
+        --opt o=bind
+        {{ item.name }}
+      loop: "{{ podman_volumes }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Verificar que los volúmenes están creados
+      command: podman volume inspect {{ item.name }}
+      loop: "{{ podman_volumes }}"
+      register: podman_volumes_info
+
+    - name: Mostrar información de los volúmenes creados
+      debug:
+        var: podman_volumes_info.results
