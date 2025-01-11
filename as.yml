@@ -1,0 +1,9 @@
+the output has been hidden due to the fact that 'no_log: true
+
+
+
+fatal: [bgcpansidb]: FAILED! => {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result", "changed": false}
+
+fatal: [bgcpansidb]: FAILED! => {"changed": false, "msg": "c{'gateway_proxy_url': 'https://bgcpansidb:443 is not a valid URL'}"}
+
+
