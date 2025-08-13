@@ -1,0 +1,1 @@
+https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws_deny-ip.html?utm_source=chatgpt.com
